@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="mx-20">
         <h2 class="text-4xl text-center font-semibold mt-5 mb-10">
             <slot></slot>
         </h2>

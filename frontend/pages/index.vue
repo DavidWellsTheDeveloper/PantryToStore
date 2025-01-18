@@ -28,10 +28,17 @@
             <FeatureHighlight
                 img="https://www.w3schools.com/images/w3schools_green.jpg"
                 alt="some alt text"
-                horizontalSwap="true"
+                :horizontalSwap="false"
                 description="some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum "
             >
-                Some Highlight</FeatureHighlight>
+                Some Highlight
+            </FeatureHighlight>
+            <FeatureHighlight
+                img="https://www.w3schools.com/images/w3schools_green.jpg"
+                alt="some alt text"
+                :horizontalSwap="true"
+                description="some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum some description, lorem ibsum "
+            ></FeatureHighlight>
             <div id="account-links" class="flex bg-cyan-800 justify-around text-center pt-5 pb-8">
                 <div id="account-links-login">
                     <h2 class="text-3xl font-bold mb-6 text-white whitespace-nowrap">Have an Account</h2>

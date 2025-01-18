@@ -9,4 +9,7 @@ export default defineNuxtConfig({
       autoprefixer: {},
     },
   },
+  runtimeConfig: {
+    NUXT_API_SECRET: 'default_secret_to_override'
+  }
 })
