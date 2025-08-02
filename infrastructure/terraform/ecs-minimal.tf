@@ -219,7 +219,13 @@ resource "aws_ecs_service" "app" {
     assign_public_ip = true   # Public subnets for cost optimization
   }
 
-  # No load balancer - direct access via CloudFront
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = "app"
+    container_port   = 80
+  }
+
+  depends_on = [aws_lb_listener.main]
 
   tags = {
     Name        = "${var.app_name}-${var.environment}-app-service"

@@ -1,8 +1,8 @@
 # CloudFront Distribution for HTTPS and CDN
 resource "aws_cloudfront_distribution" "main" {
   origin {
-    # This will need to be updated manually after ECS deployment with the actual task IP
-    domain_name = "54.208.10.131"  # ECS task public IP
+    # Uses ALB DNS name for CloudFront origin
+    domain_name = aws_lb.main.dns_name  # ALB DNS name
     origin_id   = "ECS-${var.app_name}"
     
     custom_origin_config {
