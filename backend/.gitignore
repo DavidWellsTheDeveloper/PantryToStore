@@ -1,10 +1,31 @@
-# Django #
+# ========================================
+# DJANGO BACKEND .GITIGNORE
+# ========================================
+
+# Django Core
 *.log
 *.pot
 *.pyc
-__pycache__
+__pycache__/
 db.sqlite3
-media
+db.sqlite3-journal
+media/
+staticfiles/
+static_collected/
+
+# Django Migrations (keep structure, ignore data)
+*/migrations/*.pyc
+*/migrations/__pycache__/
+
+# Django Secret Files
+local_settings.py
+settings_local.py
+.env
+.env.*
+!.env.example
+
+# Production Settings
+backend/settings_production.py.local
 
 # Backup files #
 *.bak
@@ -97,7 +118,7 @@ celerybeat-schedule.*
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Python Virtual Environments
 .env
 .venv
 env/
@@ -105,6 +126,22 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+include/
+lib/
+lib64/
+pyvenv.cfg
+pip-selfcheck.json
+
+# AWS and Deployment
+*.pem
+*.key
+awscliv2.zip
+create-iam-user.json
+
+# Production Secrets
+.aws/
+aws-credentials.json
+deployment-keys/
 
 # mkdocs documentation
 /site

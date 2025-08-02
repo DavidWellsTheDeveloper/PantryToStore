@@ -1,3 +1,7 @@
+# ========================================
+# NUXT/VUE FRONTEND .GITIGNORE
+# ========================================
+
 # Nuxt dev/build outputs
 .output
 .data
@@ -5,20 +9,55 @@
 .nitro
 .cache
 dist
+.dist
 
 # Node dependencies
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Logs
+# Package manager lockfiles (keep one, ignore others)
+# Uncomment the ones you want to ignore:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Runtime logs
 logs
 *.log
+lerna-debug.log*
+
+# Build artifacts
+build/
+out/
+.next/
+.vercel/
+.netlify/
+
+# Testing
+coverage/
+.nyc_output
+test-results/
+playwright-report/
+
+# Environment files
+.env
+.env.*
+!.env.example
+.env.local
+.env.production
 
 # Misc
 .DS_Store
 .fleet
 .idea
+*.tsbuildinfo
 
-# Local env files
-.env
-.env.*
-!.env.example
+# Deployment
+deploy-minimal.sh.local
+nginx.conf.local
+
+# Docker
+Dockerfile.local

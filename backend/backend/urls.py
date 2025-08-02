@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('recipeApp/', include('recipeApp.urls'))
+    path('api/', include('recipeApp.urls')),  # API endpoints with /api/ prefix
+    path('api-auth/', include('rest_framework.urls')),  # DRF login/logout for browsable API
 ]

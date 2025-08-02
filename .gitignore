@@ -1,0 +1,69 @@
+# ========================================
+# ROOT PROJECT .GITIGNORE
+# ========================================
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor and IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# AWS and Infrastructure
+*.pem
+*.key
+*.p12
+*.tfvars
+*.tfvars.json
+terraform.tfstate*
+.terraform/
+.terraform.lock.hcl
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example
+*.log
+*.pid
+
+# Deployment and Build Artifacts
+deploy-logs/
+build-logs/
+*.tar.gz
+*.zip
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Documentation Build
+docs/_build/
+site/
+
+# Coverage Reports
+coverage/
+.coverage
+htmlcov/
+
+# Database Files (local development)
+*.sqlite3
+*.db
+
+# Backup Files
+*.bak
+*.backup
+*.old

@@ -7,6 +7,7 @@ class Recipe(models.Model):
     instructions = models.TextField()
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
     created_at = models.DateTimeField(auto_now_add=True)
+    is_public = models.BooleanField(default=False)  # False = private, True = public
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=255)

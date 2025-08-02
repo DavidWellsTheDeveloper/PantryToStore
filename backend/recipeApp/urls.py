@@ -1,12 +1,24 @@
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
+from rest_framework.routers import DefaultRouter
 from . import views
 
+# Create a router for ViewSets
+router = DefaultRouter()
+router.register(r'recipes', views.RecipeViewSet, basename='recipe')
+router.register(r'my-recipes', views.MyRecipeViewSet, basename='my-recipe')
+router.register(r'grocery-lists', views.GroceryListViewSet, basename='grocery-list')
+
 urlpatterns = [
-    path('recipes/', views.RecipeListView.as_view(), name='recipe-list'),
-    path('recipes/<int:pk>/', views.RecipeDetailView.as_view(), name='recipe-detail'),
-    path('grocery-lists/', views.GroceryListView.as_view(), name='grocery-list'),
-    path('grocery-lists/<int:pk>/', views.GroceryListDetailView.as_view(), name='grocery-list-detail'),
-    path('login/', auth_views.LoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    # Health check endpoint
+    path('health/', views.HealthCheckView.as_view(), name='health-check'),
+    
+    # Auth endpoints
+    path('auth/register/', views.RegisterView.as_view(), name='register'),
+    path('auth/login/', views.LoginView.as_view(), name='login'),
+    path('auth/logout/', views.LogoutView.as_view(), name='logout'),
+    path('auth/user/', views.UserProfileView.as_view(), name='user-profile'),
+    path('auth/csrf-token/', views.CSRFTokenView.as_view(), name='csrf-token'),
+    
+    # Include router URLs
+    path('', include(router.urls)),
 ]
