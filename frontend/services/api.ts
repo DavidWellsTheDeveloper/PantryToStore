@@ -51,7 +51,9 @@ class ApiService {
   private initializeBaseUrl(): void {
     if (!this.baseUrl) {
       const config = useRuntimeConfig();
-      this.baseUrl = config.public.apiBase || 'http://localhost:8000';
+      // In production, apiBase should be empty string to use relative URLs
+      // Only fallback to localhost in development
+      this.baseUrl = config.public.apiBase !== undefined ? config.public.apiBase : 'http://localhost:8000';
     }
   }
 

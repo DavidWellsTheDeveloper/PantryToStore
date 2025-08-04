@@ -8,9 +8,12 @@ from .settings import *
 DEBUG = False
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 ALLOWED_HOSTS = [
-    os.environ.get('DOMAIN_NAME', 'your-domain.com'),
-    os.environ.get('ALB_DNS_NAME', ''),  # Application Load Balancer
+    os.environ.get('DOMAIN_NAME', 'pantrytostore.com'),
+    'www.pantrytostore.com',
+    'd18fmaz7qqco39.cloudfront.net',  # CloudFront domain
+    'pantrytostore-production-alb-308236472.us-east-1.elb.amazonaws.com',  # ALB
     'localhost',  # For health checks
+    '127.0.0.1',  # For internal health checks
 ]
 
 # Database - Use RDS PostgreSQL in production
@@ -56,10 +59,20 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# HTTPS Settings
-SECURE_SSL_REDIRECT = True
+# HTTPS Settings - CloudFront handles HTTPS termination
+# Don't redirect to HTTPS since CloudFront already handles this
+SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+# Trust CloudFront's forwarded headers
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF Settings - Trust our domain for CSRF validation
+CSRF_TRUSTED_ORIGINS = [
+    'https://pantrytostore.com',
+    'https://www.pantrytostore.com',
+    f"https://{os.environ.get('DOMAIN_NAME', 'pantrytostore.com')}",
+]
 
 # CORS Settings for production
 CORS_ALLOWED_ORIGINS = [

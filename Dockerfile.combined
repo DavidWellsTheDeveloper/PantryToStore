@@ -66,7 +66,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY --from=backend-builder /app/backend /app/backend
 WORKDIR /app/backend
 
-# Copy frontend build
+# Remove default Nginx files and copy frontend build
+RUN rm -rf /usr/share/nginx/html/*
 COPY --from=frontend-builder /app/frontend/.output/public /usr/share/nginx/html
 
 # Static files will be collected at runtime and served by Django
