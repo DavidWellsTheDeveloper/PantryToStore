@@ -119,14 +119,14 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                                 >
                             </div>
-                            <div class="w-24">
+                            <div v-if="ingredient.unit !== 'toTaste'" class="w-24">
                                 <input
                                     v-model.number="ingredient.quantity"
                                     type="number"
                                     step="0.01"
                                     min="0"
                                     placeholder="Amount"
-                                    required
+                                    :required="ingredient.unit !== 'toTaste'"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                                 >
                             </div>
@@ -150,6 +150,8 @@
                                     <option value="slice">Slice</option>
                                     <option value="clove">Clove</option>
                                     <option value="pinch">Pinch</option>
+                                    <option value="whole">Whole</option>
+                                    <option value="toTaste">To Taste</option>
                                 </select>
                             </div>
                             <button
@@ -265,7 +267,11 @@ const isFormValid = computed(() => {
     return recipe.value.title.trim() !== '' &&
            recipe.value.instructions.trim() !== '' &&
            recipe.value.ingredients.length > 0 &&
-           recipe.value.ingredients.every(ing => ing.name.trim() !== '' && ing.quantity > 0 && ing.unit !== '');
+           recipe.value.ingredients.every(ing => 
+               ing.name.trim() !== '' && 
+               ing.unit !== '' && 
+               (ing.unit === 'toTaste' || ing.quantity > 0)
+           );
 });
 
 // Methods
