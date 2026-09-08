@@ -1,0 +1,269 @@
+/* ============================================================
+   Pantry to Store — design tokens & shared styles (vanilla CSS)
+   Tokens mirror the current app's theme (PRD §15). Components
+   style themselves in <style scoped>; shared primitives live here.
+   ============================================================ */
+
+:root {
+  /* Warm editorial palette (fixed — the brand, PRD §15) */
+  --canvas: oklch(0.975 0.013 85); /*   #FCF9F2 */
+  --forest: oklch(0.32 0.04 150); /*   #2D4032 */
+  --clay: oklch(0.65 0.14 40); /*     #D97757 */
+  --sand: oklch(0.89 0.02 85); /*     #E8E2D2 */
+
+  --background: var(--canvas);
+  --foreground: var(--forest);
+  --card: oklch(0.99 0.008 85);
+  --card-foreground: var(--forest);
+  --primary: var(--clay);
+  --primary-contrast: oklch(0.99 0.008 85);
+  --secondary: var(--sand);
+  --secondary-foreground: var(--forest);
+  --muted-foreground: oklch(0.45 0.02 150);
+  --border: oklch(0.86 0.02 85);
+
+  /* Macro chips (from current theme) */
+  --macro-calories: oklch(0.7 0.16 65);
+  --macro-calories-soft: oklch(0.95 0.05 75);
+  --macro-protein: oklch(0.62 0.19 25);
+  --macro-protein-soft: oklch(0.95 0.04 25);
+  --macro-carbs: oklch(0.62 0.14 245);
+  --macro-carbs-soft: oklch(0.95 0.035 240);
+  --macro-fat: oklch(0.6 0.16 305);
+  --macro-fat-soft: oklch(0.95 0.035 305);
+
+  /* Shape, type, layout */
+  --radius: 0.5rem;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --container: 72rem; /* narrow editorial column */
+  --container-pad: 1rem;
+  --breakpoint: 768px;
+  --header-h: 4.5rem;
+  --space: 1.5rem;
+}
+
+/* ---------- Base ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5em;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+  height: auto;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+code,
+kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ---------- Shared primitives ---------- */
+
+/* Layout column — centered editorial column, mobile-first padding */
+.container {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+@media (min-width: 641px) {
+  .container {
+    --container-pad: 1.5rem;
+  }
+}
+
+/* Uppercase letter-spaced eyebrow label */
+.eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+/* Flexbox layout helpers (mobile-first, PRD §15) */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.row--center {
+  align-items: center;
+}
+
+.row--between {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.row--gutter {
+  gap: 0.75rem;
+}
+
+.col {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+@media (min-width: 641px) {
+  .col--half {
+    flex-basis: calc(50% - 0.75rem);
+  }
+
+  .col--third {
+    flex-basis: calc(33.333% - 0.75rem);
+  }
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.btn--primary:hover {
+  background: color-mix(in srgb, var(--primary), black 8%);
+  text-decoration: none;
+}
+
+.btn--outline {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.btn--outline:hover {
+  background: var(--secondary);
+  text-decoration: none;
+}
+
+.btn--lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+.btn--sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* Card surface */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Filter/detail chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+}
+
+@media (min-width: 768px) {
+  .chip {
+    font-size: 0.875rem;
+  }
+}
+
+/* Skeleton loader placeholder */
+.skeleton {
+  border-radius: var(--radius);
+  background: var(--sand);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
