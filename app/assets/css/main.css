@@ -208,11 +208,35 @@ kbd {
   font-size: 0.8125rem;
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Card surface */
 .card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+/* Recipe card grid — flexbox, mobile-first (1 col → 2 → 3) */
+.recipe-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.recipe-grid > * {
+  flex: 1 1 calc(50% - 0.625rem);
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .recipe-grid > * {
+    flex-basis: calc(33.333% - 0.835rem);
+  }
 }
 
 /* Filter/detail chip */
