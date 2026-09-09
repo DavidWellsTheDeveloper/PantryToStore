@@ -12,12 +12,34 @@
     <article v-else class="detail">
       <header class="detail__header">
         <p class="detail__eyebrow">Recipe</p>
-        <h1 class="detail__title">{{ recipe.title }}</h1>
+        <div class="detail__titleRow">
+          <h1 class="detail__title">{{ recipe.title }}</h1>
+          <button
+            type="button"
+            class="fav-btn"
+            :class="{ 'fav-btn--active': isFav }"
+            :disabled="favBusy"
+            :aria-label="isFav ? 'Remove from favorites' : 'Save to favorites'"
+            :title="user ? (isFav ? 'Remove from favorites' : 'Save to favorites') : 'Sign in to save favorites'"
+            @click="toggleFavorite"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" :class="{ 'fav-btn__svg': isFav }" aria-hidden="true">
+              <path
+                d="M12 21s-8-5.35-8-11A4.75 4.75 0 0 1 12 6a4.75 4.75 0 0 1 8 4c0 5.65-8 11-8 11Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
         <p class="detail__meta">
           <span v-if="recipe.readyInMinutes">{{ recipe.readyInMinutes }} min</span>
           <span v-if="recipe.servings">{{ recipe.servings }} servings</span>
         </p>
         <MacrosChips :macros="recipe.macros" class="detail__macros" />
+        <p v-if="favError" class="fav-error" role="status">{{ favError }}</p>
       </header>
 
       <div v-if="recipe.image" class="detail__media">
@@ -64,6 +86,8 @@
 <script setup lang="ts">
 import type { SpoonacularRecipe, SpoonacularIngredient } from '../../utils/spoonacular.types'
 import { useSpoonacularFetch } from '../../composables/useSpoonacular'
+import { useFavorites } from '../../composables/useFavorites'
+import { ensureAuthReady, useUser } from '../../composables/useAuth'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -71,6 +95,36 @@ const id = Number(route.params.id)
 const { data: recipe, error } = await useSpoonacularFetch<SpoonacularRecipe>(
   `/api/spoonacular/recipe/${id}`,
 )
+
+const fav = useFavorites()
+const user = useUser()
+const favBusy = ref(false)
+const isFav = fav.isFavorite(id)
+const favError = computed(() => fav.error.value ?? '')
+
+onMounted(async () => {
+  await ensureAuthReady()
+  if (user.value) await fav.list()
+})
+
+async function toggleFavorite() {
+  if (!user.value) {
+    await navigateTo(`/login?redirect=${encodeURIComponent(route.fullPath)}`)
+    return
+  }
+  favBusy.value = true
+  try {
+    if (isFav.value) {
+      await fav.remove(id)
+    } else {
+      await fav.add({ id, title: recipe.value?.title ?? 'Recipe', image: recipe.value?.image })
+    }
+  } catch {
+    // fav.error is already set by the composable
+  } finally {
+    favBusy.value = false
+  }
+}
 
 // Servings scaling (client interaction on a static page)
 const scale = ref(recipe.value?.servings ?? 1)
@@ -152,6 +206,13 @@ useHead(() => {
   max-width: 42rem;
 }
 
+.detail__titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .detail__eyebrow {
   margin-bottom: 0.75rem;
 }
@@ -159,6 +220,46 @@ useHead(() => {
 .detail__title {
   font-size: clamp(2rem, 4.5vw, 2.75rem);
   margin-bottom: 0.25rem;
+}
+
+.fav-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.fav-btn:hover:not(:disabled) {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.fav-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.fav-btn--active {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.fav-btn--active .fav-btn__svg path {
+  fill: currentColor;
+}
+
+.fav-error {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clay);
 }
 
 .detail__meta {

@@ -34,6 +34,9 @@ export default defineNuxtConfig({
       // AdSense (empty until approved — §6.7 / §9.4 of the PRD)
       adsensePublisher: process.env.NUXT_PUBLIC_ADSENSE_PUBLISHER_ID || '',
       adsenseSlot: process.env.NUXT_PUBLIC_ADSENSE_SLOT || '',
+      // Supabase (client-safe publishable keys — §7.5)
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
+      supabasePublishableKey: process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '',
     },
   },
 

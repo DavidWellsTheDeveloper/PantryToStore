@@ -1,3 +1,13 @@
+<script setup lang="ts">
+import { ensureAuthReady, useUser } from '../composables/useAuth'
+
+const user = useUser()
+
+const avatar = computed(() => (user.value?.email ?? '?').charAt(0).toUpperCase())
+
+onMounted(() => ensureAuthReady())
+</script>
+
 <template>
   <header class="site-header">
     <div class="container site-header__inner">
@@ -8,7 +18,10 @@
       <nav class="nav" aria-label="Main">
         <NuxtLink to="/search" class="nav__link">Search</NuxtLink>
         <NuxtLink to="/favorites" class="nav__link">Favorites</NuxtLink>
-        <NuxtLink to="/login" class="btn btn--sm btn--primary">Sign in</NuxtLink>
+        <NuxtLink v-if="user" to="/account" class="nav__account" :title="user.email ?? 'Account'">
+          {{ avatar }}
+        </NuxtLink>
+        <NuxtLink v-else to="/login" class="btn btn--sm btn--primary">Sign in</NuxtLink>
       </nav>
     </div>
   </header>
@@ -32,6 +45,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  width: 100%;
 }
 
 .brand {
@@ -68,6 +82,23 @@
 .nav__link.router-link-active {
   color: var(--foreground);
   font-weight: 500;
+}
+
+.nav__account {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--forest);
+  color: var(--background);
+  font-weight: 600;
+}
+
+.nav__account:hover {
+  background: var(--primary);
+  text-decoration: none;
 }
 
 @media (max-width: 560px) {
