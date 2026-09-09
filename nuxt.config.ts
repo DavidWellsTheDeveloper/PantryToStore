@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'en' },
-      titleTemplate: (title) => (title ? `${title} · Pantry to Store` : 'Pantry to Store — Cook smart, eat well, waste less'),
+      // titleTemplate lives at runtime (layout) so it type-checks as a function.
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -28,6 +28,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+      // Static host runtime calls go to the serverless Spoonacular proxy (PRD §7.2).
+      // Empty = same-origin (dev/preview, where the Nitro proxy runs).
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '',
       // AdSense (empty until approved — §6.7 / §9.4 of the PRD)
       adsensePublisher: process.env.NUXT_PUBLIC_ADSENSE_PUBLISHER_ID || '',
       adsenseSlot: process.env.NUXT_PUBLIC_ADSENSE_SLOT || '',
@@ -36,4 +39,10 @@ export default defineNuxtConfig({
 
   // SSR for SEO; all public pages get statically pre-rendered via `nuxt generate`.
   ssr: true,
+
+  // Crawl links (recipe cards → /recipe/:id) so the category sections seed real recipe
+  // pages into the static output (PRD §6.1 + §6.3 prerendering strategy).
+  nitro: {
+    prerender: { crawlLinks: true },
+  },
 })
