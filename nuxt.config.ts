@@ -3,6 +3,20 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  modules: ['@nuxtjs/sitemap', '@nuxtjs/robots'],
+
+  // Canonical origin for sitemap/robots/SEO (PRD §9.4). Pantry to Store currently
+  // owns pantrytostore.com in Route 53; M5 wires the DNS/CloudFront.
+  site: {
+    url: process.env.NUXT_PUBLIC_SITE_URL || 'https://pantrytostore.com',
+  },
+  robots: {
+    disallow: ['/login', '/favorites', '/account'],
+  },
+  sitemap: {
+    exclude: ['/login', '/favorites', '/account'],
+  },
+
   css: ['~/assets/css/main.css'],
 
   app: {

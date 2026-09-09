@@ -69,6 +69,7 @@
         </section>
 
         <!-- Instructions -->
+        <AdSlot v-if="canShowAd" class="panel" />
         <section v-if="steps.length" class="card panel">
           <h2>Instructions</h2>
           <ol class="steps">
@@ -152,7 +153,17 @@ const steps = computed(() => {
   return groups.flatMap((g) => (isStep(g) ? g.steps.map((s) => ({ number: s.number, step: s.step })) : []))
 })
 
+// AdSense placement rule (PRD §6.3): single in-content unit between ingredients and
+// instructions, only when the recipe has real content (≥4 ingredients AND ≥6 steps).
+const canShowAd = computed(
+  () => (recipe.value?.extendedIngredients?.length ?? 0) >= 4 && steps.value.length >= 6,
+)
+
 const plainSummary = computed(() => (recipe.value?.summary ?? '').replace(/<[^>]+>/g, '').slice(0, 200))
+
+useCanonical()
+const siteUrl = useSiteUrl()
+const recipeUrl = computed(() => `${siteUrl}/recipe/${id}`)
 
 useHead(() => {
   const r = recipe.value
@@ -164,6 +175,7 @@ useHead(() => {
       { property: 'og:title', content: r.title },
       { property: 'og:description', content: plainSummary.value },
       { property: 'og:type', content: 'article' },
+      { property: 'og:url', content: recipeUrl.value },
       ...(r.image ? [{ property: 'og:image', content: r.image }] : []),
     ],
     script: [
@@ -173,6 +185,7 @@ useHead(() => {
           '@context': 'https://schema.org',
           '@type': 'Recipe',
           name: r.title,
+          url: recipeUrl.value,
           ...(r.image ? { image: [r.image] } : {}),
           recipeYield: r.servings,
           totalTime: r.readyInMinutes ? `PT${r.readyInMinutes}M` : undefined,
@@ -187,6 +200,17 @@ useHead(() => {
                 fatContent: r.macros.fat ? `${Math.round(r.macros.fat)} g` : undefined,
               }
             : undefined,
+        }),
+      },
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+            { '@type': 'ListItem', position: 2, name: r.title, item: recipeUrl.value },
+          ],
         }),
       },
     ],

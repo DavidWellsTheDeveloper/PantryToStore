@@ -57,6 +57,37 @@ useSeoMeta({
     'Discover healthy, affordable recipes built around what you already have. Reduce food waste with smart meal prep and pantry-first cooking.',
   ogType: 'website',
 })
+useCanonical()
+
+// Site-level structured data (PRD §6.1): WebSite + SearchAction + Organization.
+const siteUrl = useSiteUrl()
+useHead(() => ({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'WebSite',
+            name: 'Pantry to Store',
+            url: siteUrl,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${siteUrl}/search?mode=dish&q={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
+          },
+          {
+            '@type': 'Organization',
+            name: 'Pantry to Store',
+            url: siteUrl,
+          },
+        ],
+      }),
+    },
+  ],
+}))
 
 const { data: healthyData } = await useSpoonacularFetch<FoundRecipe[]>(
   '/api/spoonacular/sorted?sort=healthiness&limit=6',

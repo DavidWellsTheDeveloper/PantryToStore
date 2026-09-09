@@ -291,3 +291,37 @@ kbd {
   outline: 2px solid var(--forest);
   outline-offset: 2px;
 }
+
+/* Legal/markdown prose (privacy, terms) */
+.prose {
+  max-width: 46rem;
+}
+
+.prose p,
+.prose li {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--foreground), transparent 10%);
+}
+
+.prose > h1 {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.prose h2 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.prose ul {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+}
+
+.prose li {
+  margin: 0.4rem 0;
+}
+
+.prose a {
+  text-decoration: underline;
+}

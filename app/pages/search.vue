@@ -418,6 +418,7 @@ useSeoMeta({
     'Search recipes by what is in your pantry or by dish name. Filter by diet, allergens, cook time, and ingredient count.',
   robots: computed(() => (searchActive.value ? 'noindex, nofollow' : 'index, follow')),
 })
+useCanonical()
 </script>
 
 <style scoped>

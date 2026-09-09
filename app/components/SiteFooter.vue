@@ -8,6 +8,7 @@
         <NuxtLink to="/privacy" class="links__item">Privacy</NuxtLink>
         <NuxtLink to="/terms" class="links__item">Terms</NuxtLink>
       </nav>
+      <p class="copyright">© 2026 Pantry to Store</p>
     </div>
   </footer>
 </template>
@@ -39,5 +40,12 @@
 .links__item {
   font-size: 0.875rem;
   color: var(--muted-foreground);
+}
+
+.copyright {
+  flex-basis: 100%;
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--muted-foreground), transparent 20%);
 }
 </style>

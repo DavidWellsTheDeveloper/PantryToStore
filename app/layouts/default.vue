@@ -1,3 +1,10 @@
+<script setup lang="ts">
+useHead({
+  titleTemplate: (title) =>
+    title ? `${title} · Pantry to Store` : 'Pantry to Store — Cook smart, eat well, waste less',
+})
+</script>
+
 <template>
   <div class="site">
     <SiteHeader />
@@ -5,6 +12,7 @@
       <slot />
     </main>
     <SiteFooter />
+    <CookieConsent />
   </div>
 </template>
 
