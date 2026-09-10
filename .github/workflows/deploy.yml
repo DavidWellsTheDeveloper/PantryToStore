@@ -128,15 +128,16 @@ jobs:
           --zip-file fileb://lambda.zip
 
       - name: Ensure SPOONACULAR_API_KEY env
-        run: >-
-          for i in $(seq 1 30); do
-            status=$(aws lambda get-function-configuration
-              --function-name ${{ vars.LAMBDA_FUNCTION_NAME }}
-              --query "LastUpdateStatus" --output text);
-            [ "$status" != "InProgress" ] && break;
-            sleep 5;
-          done;
-          aws lambda update-function-configuration
-          --function-name ${{ vars.LAMBDA_FUNCTION_NAME }}
-          --environment
-          "Variables={SPOONACULAR_API_KEY=${{ secrets.SPOONACULAR_API_KEY }}}"
+        run: |
+          set -eu
+          for i in $(seq 1 60); do
+            status=$(aws lambda get-function-configuration \
+              --function-name ${{ vars.LAMBDA_FUNCTION_NAME }} \
+              --query "LastUpdateStatus" --output text)
+            [ "$status" != "InProgress" ] && break
+            sleep 5
+          done
+          aws lambda update-function-configuration \
+            --function-name ${{ vars.LAMBDA_FUNCTION_NAME }} \
+            --environment \
+            "Variables={SPOONACULAR_API_KEY=${{ secrets.SPOONACULAR_API_KEY }}}"
