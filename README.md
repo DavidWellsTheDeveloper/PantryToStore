@@ -83,7 +83,7 @@ npm run preview      # serve .output/public locally
 
 ## Deployment
 
-**Status:** the stack is designed for it, but M5 is not deployed yet. Target layout:
+**Status:** live at <https://pantrytostore.com> (api: <https://api.pantrytostore.com>). Layout:
 
 - **Static site** — `npm run generate` output (`.output/public`) synced to an S3 bucket
   served through CloudFront (TLS, apex + `www`, real 404 page — no SPA fallback, per
@@ -101,7 +101,8 @@ npm run preview      # serve .output/public locally
   `index.handler` (Node ≥ 20). The proxy reuses `server/utils/spoonacular.ts` verbatim; its
   route-level cache (`defineCachedEventHandler`) runs in the Lambda's memory with SWR — 6h for
   listings/search, 24h for recipe detail — so Spoonacular quota stays low without an extra
-  caching service. HTTPS origin `https://api.pantrytostore.com` aliases to it.
+  caching service. An API Gateway HTTP API (`$default` route) fronts the Lambda and is mapped
+  to `https://api.pantrytostore.com`; CORS is open so the static frontend can call it directly.
 - **Env for production builds** — set `NUXT_PUBLIC_API_BASE=https://api.pantrytostore.com`
   before `npm run generate`, keep `NUXT_PUBLIC_SITE_URL=https://pantrytostore.com`.
   The Spoonacular key lives in the Lambda's environment, never in the static bundle.
