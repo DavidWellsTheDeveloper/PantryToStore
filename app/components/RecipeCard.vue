@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { FoundRecipe } from '../utils/spoonacular.types'
+import { formatMinutes } from '../utils/format'
 
 const props = defineProps<{ recipe: FoundRecipe }>()
 
 const detailUrl = computed(() => `/recipe/${props.recipe.id}`)
 const metaLine = computed(() => {
   const parts: string[] = []
-  if (props.recipe.readyInMinutes) parts.push(`${props.recipe.readyInMinutes} min`)
+  const time = formatMinutes(props.recipe.readyInMinutes)
+  if (time) parts.push(time)
   if (props.recipe.ingredientCount != null) parts.push(`${props.recipe.ingredientCount} ingredients`)
   return parts.join(' · ')
 })

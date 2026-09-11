@@ -35,10 +35,11 @@
           </button>
         </div>
         <p class="detail__meta">
-          <span v-if="recipe.readyInMinutes">{{ recipe.readyInMinutes }} min</span>
+          <span v-if="recipe.readyInMinutes">{{ timeLabel }}</span>
           <span v-if="recipe.servings">{{ recipe.servings }} servings</span>
         </p>
         <MacrosChips :macros="recipe.macros" class="detail__macros" />
+        <p v-if="curated?.intro" class="detail__intro">{{ curated.intro }}</p>
         <p v-if="favError" class="fav-error" role="status">{{ favError }}</p>
       </header>
 
@@ -69,17 +70,50 @@
         </section>
 
         <!-- Instructions -->
-        <AdSlot v-if="canShowAd" class="panel" />
-        <section v-if="steps.length" class="card panel">
-          <h2>Instructions</h2>
-          <ol class="steps">
-            <li v-for="step in steps" :key="step.number" class="steps__item">{{ step.step }}</li>
-          </ol>
-          <NuxtLink v-if="recipe.sourceUrl" :to="recipe.sourceUrl" class="btn btn--outline btn--sm source" target="_blank">
-            View on {{ recipe.sourceName ?? 'the source' }} →
-          </NuxtLink>
-        </section>
+        <div class="panel-col">
+          <AdSlot v-if="canShowAd" class="panel" />
+          <section v-if="steps.length" class="card panel">
+            <h2>Instructions</h2>
+            <ol class="steps">
+              <li v-for="step in steps" :key="step.number" class="steps__item">{{ step.step }}</li>
+            </ol>
+            <NuxtLink v-if="recipe.sourceUrl" :to="recipe.sourceUrl" class="btn btn--outline btn--sm source" target="_blank">
+              View on {{ recipe.sourceName ?? 'the source' }} →
+            </NuxtLink>
+          </section>
+          <section v-if="curated?.tips.length" class="card panel">
+            <h2>Cook's notes</h2>
+            <ul class="tips">
+              <li v-for="(tip, i) in curated.tips" :key="i" class="tips__item">{{ tip }}</li>
+            </ul>
+          </section>
+        </div>
       </div>
+
+      <section v-if="curated?.faqs.length" class="card panel faq">
+        <h2>Recipe questions</h2>
+        <dl class="faq__list">
+          <div v-for="(f, i) in curated.faqs" :key="i" class="faq__item">
+            <dt class="faq__q">{{ f.q }}</dt>
+            <dd class="faq__a">{{ f.a }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section v-if="related.length" class="related">
+        <div class="section__head">
+          <div>
+            <p class="eyebrow">Try next</p>
+            <h2>More {{ related ? relatedTitle : '' }}</h2>
+          </div>
+          <NuxtLink v-if="relatedHub" :to="`/collections/${relatedHub}`" class="btn btn--outline btn--sm">
+            View all →
+          </NuxtLink>
+        </div>
+        <div class="recipe-grid">
+          <RecipeCard v-for="r in related" :key="r.id" :recipe="r" />
+        </div>
+      </section>
     </article>
   </div>
 </template>
@@ -89,13 +123,22 @@ import type { SpoonacularRecipe, SpoonacularIngredient } from '../../utils/spoon
 import { useSpoonacularFetch } from '../../composables/useSpoonacular'
 import { useFavorites } from '../../composables/useFavorites'
 import { ensureAuthReady, useUser } from '../../composables/useAuth'
+import { findCuratedRecipe, curatedCards } from '../../content/recipes'
+import { findCollection } from '../../content/collections'
+import { formatMinutes } from '../../utils/format'
 
 const route = useRoute()
 const id = Number(route.params.id)
 
-const { data: recipe, error } = await useSpoonacularFetch<SpoonacularRecipe>(
-  `/api/spoonacular/recipe/${id}`,
-)
+const curated = findCuratedRecipe(id)
+
+// Curated recipes are baked straight from the manifest (static-first, no API at build).
+// Anything outside the curated library falls back to the runtime proxy.
+const { data: apiRecipe, error } = curated
+  ? ({ data: ref<SpoonacularRecipe | null>(null), error: ref<Error | null>(null) } as any)
+  : await useSpoonacularFetch<SpoonacularRecipe>(`/api/spoonacular/recipe/${id}`)
+
+const recipe = computed<SpoonacularRecipe | null>(() => curated ?? apiRecipe.value ?? null)
 
 const fav = useFavorites()
 const user = useUser()
@@ -134,14 +177,31 @@ function displayName(ing: SpoonacularIngredient): string {
   return ing.nameClean || ing.name || ing.original || ''
 }
 
+/** Render a measurement nicely: preserve common kitchen fractions, plain decimals otherwise. */
+function prettyAmount(amount: number): string {
+  const eps = 0.02
+  const frac = [
+    [3, 4, '¾'],
+    [2, 3, '⅔'],
+    [1, 2, '½'],
+    [1, 3, '⅓'],
+    [1, 4, '¼'],
+  ] as const
+  for (const [num, den, glyph] of frac) {
+    if (Math.abs(amount - num / den) < eps) return glyph
+  }
+  if (Math.abs(amount - Math.round(amount)) < eps) return String(Math.round(amount))
+  return String(Math.round(amount * 10) / 10)
+}
+
 function amountLabel(ing: SpoonacularIngredient): string {
   const m = ing.measures?.metric ?? ing.measures?.us
   if (m?.amount != null && m.unitShort != null) {
-    return `${Math.round(m.amount * scale.value * 10) / 10} ${m.unitShort}`
+    return `${prettyAmount(Math.round(m.amount * scale.value * 10) / 10)} ${m.unitShort}`
   }
   if (ing.amount != null) {
-    const amount = Math.round(ing.amount * scale.value * 10) / 10
-    return `${amount}${ing.unit ? ' ' + ing.unit : ''}`
+    const scaled = Math.round(ing.amount * scale.value * 10) / 10
+    return `${prettyAmount(scaled)}${ing.unit ? ' ' + ing.unit : ''}`
   }
   return ing.original ?? ''
 }
@@ -153,13 +213,33 @@ const steps = computed(() => {
   return groups.flatMap((g) => (isStep(g) ? g.steps.map((s) => ({ number: s.number, step: s.step })) : []))
 })
 
+const timeLabel = computed(() => formatMinutes(recipe.value?.readyInMinutes))
+
 // AdSense placement rule (PRD §6.3): single in-content unit between ingredients and
 // instructions, only when the recipe has real content (≥4 ingredients AND ≥6 steps).
 const canShowAd = computed(
   () => (recipe.value?.extendedIngredients?.length ?? 0) >= 4 && steps.value.length >= 6,
 )
 
+// Related recipes share the recipe's first collection.
+const relatedHub = computed(() => curated?.collections[0])
+const related = computed(() => {
+  if (!curated) return [] as ReturnType<typeof curatedCards>
+  const slug = curated.collections[0]
+  const hub = slug ? findCollection(slug) : undefined
+  const ids = (hub?.recipeIds ?? []).filter((rid) => rid !== id)
+  return curatedCards(ids.slice(0, 4))
+})
+const relatedTitle = computed(() => {
+  const hub = relatedHub.value ? findCollection(relatedHub.value) : undefined
+  return hub ? hub.title.replace(/^.*?:\s*/, '') : ''
+})
+
 const plainSummary = computed(() => (recipe.value?.summary ?? '').replace(/<[^>]+>/g, '').slice(0, 200))
+const metaDescription = computed(() => {
+  if (curated) return curated.summary
+  return plainSummary.value
+})
 
 useCanonical()
 const siteUrl = useSiteUrl()
@@ -168,40 +248,52 @@ const recipeUrl = computed(() => `${siteUrl}/recipe/${id}`)
 useHead(() => {
   const r = recipe.value
   if (!r) return {}
+  const ld: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Recipe',
+    name: r.title,
+    url: recipeUrl.value,
+    mainEntityOfPage: recipeUrl.value,
+    ...(r.image ? { image: [r.image] } : {}),
+    recipeYield: r.servings,
+    totalTime: r.readyInMinutes ? `PT${r.readyInMinutes}M` : undefined,
+    recipeIngredient: r.extendedIngredients?.map((i) => i.original ?? i.name).filter(Boolean),
+    recipeInstructions: steps.value.map((s) => ({ '@type': 'HowToStep', position: s.number, text: s.step })),
+    nutrition: recipe.value?.macros
+      ? {
+          '@type': 'NutritionInformation',
+          calories: recipe.value.macros.calories ? `${Math.round(recipe.value.macros.calories)} calories` : undefined,
+          proteinContent: recipe.value.macros.protein ? `${Math.round(recipe.value.macros.protein)} g` : undefined,
+          carbohydrateContent: recipe.value.macros.carbs ? `${Math.round(recipe.value.macros.carbs)} g` : undefined,
+          fatContent: recipe.value.macros.fat ? `${Math.round(recipe.value.macros.fat)} g` : undefined,
+        }
+      : undefined,
+  }
+  if (curated) {
+    ld.description = curated.intro
+    ld.keywords = curated.collections
+      .map((slug) => findCollection(slug)?.title)
+      .filter(Boolean)
+      .join(', ')
+    ld.datePublished = curated.datePublished
+    ld.dateModified = curated.datePublished
+    ld.author = { '@type': 'Organization', name: 'Pantry to Store', url: `${siteUrl}/about` }
+    ld.publisher = { '@type': 'Organization', name: 'Pantry to Store', url: siteUrl }
+  }
+  for (const key of Object.keys(ld)) if (ld[key] == null) delete ld[key]
+
   return {
     title: r.title,
     meta: [
-      { name: 'description', content: plainSummary.value },
+      { name: 'description', content: metaDescription.value },
       { property: 'og:title', content: r.title },
-      { property: 'og:description', content: plainSummary.value },
+      { property: 'og:description', content: metaDescription.value },
       { property: 'og:type', content: 'article' },
       { property: 'og:url', content: recipeUrl.value },
       ...(r.image ? [{ property: 'og:image', content: r.image }] : []),
     ],
     script: [
-      {
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'Recipe',
-          name: r.title,
-          url: recipeUrl.value,
-          ...(r.image ? { image: [r.image] } : {}),
-          recipeYield: r.servings,
-          totalTime: r.readyInMinutes ? `PT${r.readyInMinutes}M` : undefined,
-          recipeIngredient: r.extendedIngredients?.map((i) => i.original ?? i.name).filter(Boolean),
-          recipeInstructions: steps.value.map((s) => ({ '@type': 'HowToStep', position: s.number, text: s.step })),
-          nutrition: r.macros
-            ? {
-                '@type': 'NutritionInformation',
-                calories: r.macros.calories ? `${Math.round(r.macros.calories)} calories` : undefined,
-                proteinContent: r.macros.protein ? `${Math.round(r.macros.protein)} g` : undefined,
-                carbohydrateContent: r.macros.carbs ? `${Math.round(r.macros.carbs)} g` : undefined,
-                fatContent: r.macros.fat ? `${Math.round(r.macros.fat)} g` : undefined,
-              }
-            : undefined,
-        }),
-      },
+      { type: 'application/ld+json', innerHTML: JSON.stringify(ld) },
       {
         type: 'application/ld+json',
         innerHTML: JSON.stringify({
@@ -235,10 +327,6 @@ useHead(() => {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-}
-
-.detail__eyebrow {
-  margin-bottom: 0.75rem;
 }
 
 .detail__title {
@@ -298,6 +386,13 @@ useHead(() => {
   margin-top: 1rem;
 }
 
+.detail__intro {
+  margin: 1.25rem 0 0;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+
 .detail__media {
   margin: 2rem 0;
   border-radius: var(--radius);
@@ -316,13 +411,21 @@ useHead(() => {
   gap: 1.5rem;
 }
 
+.panel-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
 @media (min-width: 900px) {
   .detail__columns {
     flex-direction: row;
     align-items: flex-start;
   }
 
-  .panel {
+  .panel,
+  .panel-col {
     flex: 1;
   }
 }
@@ -400,6 +503,77 @@ useHead(() => {
 
 .source {
   margin-top: 0.5rem;
+}
+
+.tips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tips__item {
+  position: relative;
+  padding-left: 1.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.tips__item::before {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--clay);
+}
+
+.faq {
+  margin-top: 1.5rem;
+}
+
+.faq__list {
+  margin: 0;
+}
+
+.faq__item {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.faq__item:last-child {
+  border-bottom: 0;
+}
+
+.faq__q {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.faq__a {
+  margin: 0.25rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+
+.related {
+  margin-top: 2.5rem;
+}
+
+.section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.section__head h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.5rem;
 }
 
 .empty {

@@ -24,7 +24,7 @@ export type FoundRecipe = {
 
 export type SpoonacularIngredient = {
   id?: number
-  name: string
+  name?: string
   nameClean?: string
   original?: string
   amount?: number

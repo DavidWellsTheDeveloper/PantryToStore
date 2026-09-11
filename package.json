@@ -9,6 +9,8 @@
     "generate": "nuxt generate",
     "typecheck": "nuxt typecheck",
     "preview": "nuxt preview",
+    "recipe:extract": "node scripts/extract-recipe-data.mjs",
+    "recipe:snapshot": "node scripts/snapshot-recipes.mjs",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {

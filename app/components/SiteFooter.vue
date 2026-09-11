@@ -5,6 +5,9 @@
         Pantry <span class="brand__accent">to</span> Store
       </NuxtLink>
       <nav class="links" aria-label="Footer">
+        <NuxtLink to="/about" class="links__item">About</NuxtLink>
+        <NuxtLink to="/collections" class="links__item">Collections</NuxtLink>
+        <NuxtLink to="/contact" class="links__item">Contact</NuxtLink>
         <NuxtLink to="/privacy" class="links__item">Privacy</NuxtLink>
         <NuxtLink to="/terms" class="links__item">Terms</NuxtLink>
       </nav>

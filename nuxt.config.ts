@@ -11,10 +11,10 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SITE_URL || 'https://pantrytostore.com',
   },
   robots: {
-    disallow: ['/login', '/favorites', '/account'],
+    disallow: ['/login', '/favorites', '/account', '/search'],
   },
   sitemap: {
-    exclude: ['/login', '/favorites', '/account'],
+    exclude: ['/login', '/favorites', '/account', '/search'],
   },
 
   css: ['~/assets/css/main.css'],

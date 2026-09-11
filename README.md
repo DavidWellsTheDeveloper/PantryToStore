@@ -107,18 +107,24 @@ npm run preview      # serve .output/public locally
   before `npm run generate`, keep `NUXT_PUBLIC_SITE_URL=https://pantrytostore.com`.
   The Spoonacular key lives in the Lambda's environment, never in the static bundle.
 - **CI + nightly refresh** — generate → sync S3 → invalidate CloudFront; a scheduled run
-  each night keeps the ~12 seeded recipe pages and sitemap/JSON-LD fresh (the proxy caches
-  recipe JSON so Spoonacular quota stays low).
+  each night re-generates the curated library + sitemap/JSON-LD. The curated build is fully
+  offline (no Spoonacular calls), so nightly runs cannot be broken by an exhausted quota (the
+  proxy cache still keeps runtime Spoonacular spend low).
 - **Cost** — pay-as-you-go only: S3/CloudFront usage is pennies at hobby scale, Lambda sits
   in the always-free tier, and Supabase stays on its free tier.
 
 ### Pre-launch checklist
 
+- [x] Curated content layer: 12 editorial recipes, 4 collection hubs, About + Contact, real 404
+- [x] Indexing hygiene: `/search` is `noindex`, tool/gated pages excluded from sitemap/robots
 - [ ] Re-enable Supabase email confirmation (with SMTP)
 - [ ] Add production origin (`https://pantrytostore.com` + `www`) to Supabase Redirect URLs
 - [ ] Verify apex/www redirects, `robots.txt` and `sitemap.xml`, and the 404 page
-- [ ] Apply to AdSense once the site is live with more seed content; then set
-      `NUXT_PUBLIC_ADSENSE_PUBLISHER_ID`/`_SLOT` and rebuild
+- [ ] Grow curated library to 30+ recipes (`npm run recipe:snapshot -- --add 20`) and give the
+      new recipes editorial entries before applying
+- [ ] Apply to AdSense (content is now approval-credible); after approval:
+      create `public/ads.txt`, set `NUXT_PUBLIC_ADSENSE_PUBLISHER_ID`/`_SLOT`, rebuild,
+      confirm ads render on recipe pages only and CWV stays clean
 
 ---
 
@@ -126,15 +132,34 @@ npm run preview      # serve .output/public locally
 
 **Static-first with SSR-quality SEO.** `nuxt generate` prerenders every public page with its
 HTML, meta, JSON-LD, and content baked in (SSR rendering for crawlers, then hydration).
-`nitro.prerender.crawlLinks` discovers the 12 seeded recipe pages from the home sections.
-Nothing is rendered on the client for SEO-critical content — it's in the initial HTML.
+`nitro.prerender.crawlLinks` discovers the curated recipe pages, collection hubs, and trust
+pages from the home/footer links — 56 pre-rendered routes today (12 curated recipes + 4
+collection hubs + about/contact + privacy/terms + home + sitemap). Nothing is rendered on the
+client for SEO-critical content — it's in the initial HTML.
+
+### Curated content library (`app/content/`)
+
+The recipe pages are **publisher content, not an API dump**. Each curated recipe is a
+snapshot of the Spoonacular fact data (`app/content/recipe-data.ts`, machine-generated) plus
+original editorial copy written by us (`app/content/recipes.ts` — intro, cook's notes, FAQs,
+collections, display-title overrides). Collection hubs (`app/content/collections.ts`) group
+recipes into interlinked static pages (`/collections/[slug]`), and each recipe JSON-LD block
+carries author/publisher/datePublished/keywords.
+
+- `npm run recipe:extract` — reseed `recipe-data.ts` from a local build's HTML (no API).
+- `npm run recipe:snapshot` — refresh/extend `recipe-data.ts` from Spoonacular
+  (`--add 20` adds the top new recipes to the manifest; `--ids a,b,c` adds specific ones).
+  New recipes render fine without editorial; add an entry to `recipes.ts` to give them an
+  intro/notes/FAQs.
 
 **Build-time vs runtime backend.** During `dev`/`generate`/`preview`, the Nitro server owns
 three API routes — `GET /api/spoonacular/sorted`, `/recipe/[id]`, and `/search` — which cache
-Spoonacular responses in memory and keep the API key server-side. The static output is
-self-sufficient: it embeds the fetched data. After deploy, pages needing live data
-("Load more", search) call the configured `NUXT_PUBLIC_API_BASE` — the Lambda — via the same
-`useSpoonacularFetch` helper.
+Spoonacular responses in memory and keep the API key server-side. The curated recipe pages
+render **without any build-time API call** (data comes from the manifest), so `generate`
+works offline; non-curated `/recipe/:id` URLs fall back to the runtime proxy. The static
+output is self-sufficient. After deploy, pages needing live data ("Load more", search) call
+the configured `NUXT_PUBLIC_API_BASE` — the Lambda — via the same `useSpoonacularFetch`
+helper.
 
 **Client-side auth + Postgres.** Supabase runs entirely in the browser (publishable keys);
 `useAuth`/`useFavorites` wrap the SDK. Rows are protected by **RLS** (`auth.uid() = user_id`)
