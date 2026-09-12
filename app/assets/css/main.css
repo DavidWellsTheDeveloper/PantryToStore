@@ -221,21 +221,17 @@ kbd {
   border-radius: var(--radius);
 }
 
-/* Recipe card grid — flexbox, mobile-first (1 col → 2 → 3) */
+/* Recipe card grid — fixed 2 → 3 columns. Grid (not flex) so a short
+   final row keeps full-size, left-aligned cards instead of stretching. */
 .recipe-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 1.25rem;
-}
-
-.recipe-grid > * {
-  flex: 1 1 calc(50% - 0.625rem);
-  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (min-width: 768px) {
-  .recipe-grid > * {
-    flex-basis: calc(33.333% - 0.835rem);
+  .recipe-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
