@@ -1,8 +1,8 @@
 <template>
   <footer class="site-footer">
     <div class="container row row--between site-footer__inner">
-      <NuxtLink to="/" class="brand">
-        Pantry <span class="brand__accent">to</span> Store
+      <NuxtLink to="/" class="brand" aria-label="Pantry to Store — home">
+        <img src="/brand/logo-mono.svg" alt="Pantry to Store" width="128" height="36" class="brand__logo" />
       </NuxtLink>
       <nav class="links" aria-label="Footer">
         <NuxtLink to="/about" class="links__item">About</NuxtLink>
@@ -27,12 +27,14 @@
 }
 
 .brand {
-  font-family: var(--font-display);
-  font-size: 1.125rem;
+  display: inline-flex;
+  align-items: center;
 }
 
-.brand__accent {
-  color: var(--primary);
+.brand__logo {
+  display: block;
+  height: 1.75rem;
+  width: auto;
 }
 
 .links {

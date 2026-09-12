@@ -79,8 +79,8 @@ watch(open, (isOpen) => {
       </nav>
 
       <!-- Brand sits on the right; navigation leads on the left. -->
-      <NuxtLink to="/" class="brand">
-        Pantry <span class="brand__accent">to</span> Store
+      <NuxtLink to="/" class="brand" aria-label="Pantry to Store — home">
+        <img src="/brand/logo-primary.svg" alt="Pantry to Store" width="160" height="45" class="brand__logo" />
       </NuxtLink>
     </div>
   </header>
@@ -108,14 +108,15 @@ watch(open, (isOpen) => {
 }
 
 .brand {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
   white-space: nowrap;
 }
 
-.brand__accent {
-  color: var(--primary);
+.brand__logo {
+  display: block;
+  height: 2.5rem;
+  width: auto;
 }
 
 .nav {

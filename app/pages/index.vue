@@ -73,7 +73,7 @@ useHead(() => ({
             '@type': 'Organization',
             name: 'Pantry to Store',
             url: siteUrl,
-            logo: `${siteUrl}/favicon.ico`,
+            logo: `${siteUrl}/app-icon-512.png`,
           },
           {
             '@type': 'ItemList',

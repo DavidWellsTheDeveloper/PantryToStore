@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const siteOrigin = (process.env.NUXT_PUBLIC_SITE_URL || 'https://pantrytostore.com').replace(/\/$/, '')
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -27,8 +29,16 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'theme-color', content: '#FCF9F2' },
+        // Default social card (pages with their own image, e.g. recipes, override it).
+        { property: 'og:image', content: `${siteOrigin}/og-image.png` },
+        { property: 'og:image:alt', content: 'Pantry to Store — pantry-first recipes' },
+        { name: 'twitter:card', content: 'summary_large_image' },
       ],
       link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
