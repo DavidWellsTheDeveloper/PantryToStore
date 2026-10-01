@@ -79,8 +79,64 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Sync to S3
-        run: aws s3 sync .output/public s3://${{ vars.AWS_BUCKET }}/ --delete
+      # Three disjoint groups so each object's Cache-Control is decided by its
+      # type, not by which sync happened to run last. Every group pairs
+      # --exclude "*" with its own --include list, which is what scopes
+      # --delete to that group: excluded keys are never deletion candidates.
+      #
+      # The trailing --exclude "_nuxt/*" on the revalidate group must stay
+      # after the --include flags. aws s3 filter rules are evaluated in
+      # command-line order and the last matching rule wins, so putting it
+      # first would let "*.json" re-include _nuxt/builds/latest.json and
+      # _nuxt/builds/meta/*.json and overwrite their immutable headers.
+      - name: Sync hashed build assets to S3
+        run: |
+          aws s3 sync .output/public s3://${{ vars.AWS_BUCKET }}/ \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*" \
+            --include "_nuxt/*"
+
+      - name: Sync unhashed static files to S3
+        run: |
+          aws s3 sync .output/public s3://${{ vars.AWS_BUCKET }}/ \
+            --delete \
+            --cache-control "public, max-age=86400" \
+            --exclude "*" \
+            --include "brand/*" \
+            --include "__sitemap__/*" \
+            --include "*.png" \
+            --include "*.svg" \
+            --include "*.ico"
+
+      - name: Sync HTML/XML/JSON with no-cache
+        run: |
+          aws s3 sync .output/public s3://${{ vars.AWS_BUCKET }}/ \
+            --delete \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --exclude "*" \
+            --include "*.html" \
+            --include "*.xml" \
+            --include "*.json" \
+            --include "robots.txt" \
+            --exclude "_nuxt/*"
+
+      # aws s3 sync skips files that are already byte-identical, so on the
+      # first run after this policy was introduced the assets deployed by the
+      # old bare `--delete` sync kept their original (missing) Cache-Control.
+      # REPLACE forces the headers onto objects that already exist. Costs one
+      # re-upload of ~11 small static files once; no-op on later runs.
+      - name: Backfill Cache-Control on existing static files
+        run: |
+          aws s3 cp .output/public s3://${{ vars.AWS_BUCKET }}/ --recursive \
+            --cache-control "public, max-age=86400" \
+            --metadata-directive REPLACE \
+            --exclude "*" \
+            --include "brand/*" \
+            --include "__sitemap__/*" \
+            --include "*.png" \
+            --include "*.svg" \
+            --include "*.ico"
 
       - name: Invalidate CloudFront
         run: >-
