@@ -31,9 +31,9 @@ jobs:
     name: Typecheck & generate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -52,7 +52,7 @@ jobs:
           NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
 
       - name: Upload static site artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: static-site
           path: .output/public
@@ -68,12 +68,12 @@ jobs:
       github.event_name == 'schedule'
     steps:
       - name: Download static site
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: static-site
           path: .output/public
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -153,9 +153,9 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -171,7 +171,7 @@ jobs:
           cd .output/server
           zip -r9 "$GITHUB_WORKSPACE/lambda.zip" .
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
