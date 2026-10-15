@@ -29,6 +29,8 @@ export default defineCachedEventHandler(
     const cuisines = asList(q.cuisines)
     const maxReadyTime = asNumber(q.time)
     const maxIngredients = asNumber(q.maxIng)
+    const offset = asNumber(q.offset)
+    const number = asNumber(q.number) || 12
 
     const hasFilters = Boolean(
       diet || intolerances.length || type || cuisines.length || maxReadyTime > 0 || maxIngredients > 0,
@@ -38,7 +40,7 @@ export default defineCachedEventHandler(
     if (mode === 'dish' && !query && !hasFilters) return []
 
     if (mode === 'pantry' && !hasFilters) {
-      return findByIngredients(ingredients)
+      return findByIngredients(ingredients, { number, offset })
     }
 
     return complexSearch({
@@ -50,6 +52,8 @@ export default defineCachedEventHandler(
       cuisines: cuisines.length ? cuisines : undefined,
       maxReadyTime: maxReadyTime || undefined,
       maxIngredients: maxIngredients || undefined,
+      number,
+      offset,
     })
   },
   { maxAge: 60 * 60 * 6, swr: true, group: 'spoonacular', name: 'search' },

@@ -75,10 +75,6 @@ function toFoundRecipe(r: SearchResultRow): FoundRecipe {
   }
 }
 
-/**
- * Sorted recipe listing (home categories): `sortedRecipes('healthiness' | 'popularity')`.
- * Proxy endpoints wrap this with route-level caching.
- */
 export async function sortedRecipes(
   sort: 'healthiness' | 'popularity',
   number = 6,
@@ -96,21 +92,24 @@ export async function sortedRecipes(
   return (json?.results ?? []).map(toFoundRecipe)
 }
 
-/** Full recipe detail (SEO pages). Attaches macros. */
 export async function recipeById(id: number): Promise<SpoonacularRecipe> {
   const json = (await fetchSpoonacular(`/recipes/${id}/information?includeNutrition=true`)) as SpoonacularRecipe
   json.macros = extractMacros(json.nutrition)
   return json
 }
 
-/** Pantry mode: find recipes that use the most of the given ingredients. */
-export async function findByIngredients(ingredients: string[]): Promise<FoundRecipe[]> {
+export async function findByIngredients(
+  ingredients: string[],
+  opts?: { number?: number; offset?: number },
+): Promise<FoundRecipe[]> {
+  const number = opts?.number && opts.number > 0 ? opts.number : 12
   const params = new URLSearchParams({
     ingredients: ingredients.join(','),
-    number: '12',
+    number: String(number),
     ranking: '1',
     ignorePantry: 'true',
   })
+  if (opts?.offset && opts.offset > 0) params.set('offset', String(opts.offset))
   const json = (await fetchSpoonacular(`/recipes/findByIngredients?${params}`)) as SearchResultRow[]
   return Array.isArray(json) ? json.map(toFoundRecipe) : []
 }
@@ -124,9 +123,10 @@ export type ComplexSearchInput = {
   cuisines?: string[]
   maxReadyTime?: number
   maxIngredients?: number
+  number?: number
+  offset?: number
 }
 
-/** Dish mode (or pantry + filters): full complexSearch with all filter knobs. */
 export async function complexSearch(input: ComplexSearchInput): Promise<FoundRecipe[]> {
   const params = new URLSearchParams()
   if (input.query) params.set('query', input.query)
@@ -142,7 +142,9 @@ export async function complexSearch(input: ComplexSearchInput): Promise<FoundRec
   if (input.maxReadyTime && input.maxReadyTime > 0) params.set('maxReadyTime', String(input.maxReadyTime))
   params.set('addRecipeInformation', 'true')
   params.set('addRecipeNutrition', 'true')
-  params.set('number', '24')
+  const number = input.number && input.number > 0 ? input.number : 24
+  params.set('number', String(number))
+  if (input.offset && input.offset > 0) params.set('offset', String(input.offset))
 
   const json = (await fetchSpoonacular(`/recipes/complexSearch?${params}`)) as { results?: SearchResultRow[] }
   const results = (json?.results ?? []).map(toFoundRecipe)
@@ -150,5 +152,5 @@ export async function complexSearch(input: ComplexSearchInput): Promise<FoundRec
   const cap = input.maxIngredients
   const filtered = cap && cap > 0 ? results.filter((r) => r.ingredientCount === undefined || r.ingredientCount <= cap) : results
 
-  return filtered.slice(0, 12)
+  return filtered.slice(0, number)
 }

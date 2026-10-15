@@ -20,7 +20,7 @@
       <li>
         <strong>Curated collections.</strong> Quick weeknight dinners, one-pot and
         slow-cooker meals, plant-forward plates, and comfort favorites — grouped into
-        collections so there is always somewhere to start.
+        <NuxtLink to="/collections">collections</NuxtLink> so there is always somewhere to start.
       </li>
       <li>
         <strong>Recipes that respect attribution.</strong> Factual recipe data (ingredients,
@@ -63,6 +63,10 @@ useSeoMeta({
   title: 'About',
   description:
     'Pantry to Store is a small, independent recipe site built around cooking with what you already have — curated collections, original notes, and honest attribution.',
+  ogTitle: 'About · Pantry to Store',
+  ogDescription: 'Pantry to Store is a small, independent recipe site built around cooking with what you already have — curated collections, original notes, and honest attribution.',
+  twitterTitle: 'About · Pantry to Store',
+  twitterDescription: 'Pantry to Store is a small, independent recipe site built around cooking with what you already have — curated collections, original notes, and honest attribution.',
 })
 useCanonical()
 </script>

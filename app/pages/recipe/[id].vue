@@ -114,6 +114,17 @@
           <RecipeCard v-for="r in related" :key="r.id" :recipe="r" />
         </div>
       </section>
+
+      <nav class="explore card panel" aria-label="Explore more recipes">
+        <h2>Explore more</h2>
+        <div class="explore__links">
+          <NuxtLink v-for="c in hubs" :key="c.slug" :to="`/collections/${c.slug}`" class="chip">
+            {{ c.title }}
+          </NuxtLink>
+          <NuxtLink to="/collections" class="chip">All collections</NuxtLink>
+          <NuxtLink to="/search" class="chip">Search recipes by ingredient</NuxtLink>
+        </div>
+      </nav>
     </article>
   </div>
 </template>
@@ -124,7 +135,7 @@ import { useSpoonacularFetch } from '../../composables/useSpoonacular'
 import { useFavorites } from '../../composables/useFavorites'
 import { ensureAuthReady, useUser } from '../../composables/useAuth'
 import { findCuratedRecipe, curatedCards } from '../../content/recipes'
-import { findCollection } from '../../content/collections'
+import { collections, findCollection } from '../../content/collections'
 import { formatMinutes } from '../../utils/format'
 
 const route = useRoute()
@@ -221,6 +232,10 @@ const canShowAd = computed(
   () => (recipe.value?.extendedIngredients?.length ?? 0) >= 4 && steps.value.length >= 6,
 )
 
+// Collection hubs this recipe belongs to. Curated recipes know their membership;
+// API-only recipes get the generic collection/search links instead.
+const hubs = computed(() => collections.filter((c) => c.recipeIds.includes(id)))
+
 // Related recipes share the recipe's first collection.
 const relatedHub = computed(() => curated?.collections[0])
 const related = computed(() => {
@@ -243,7 +258,7 @@ const metaDescription = computed(() => {
 
 useCanonical()
 const siteUrl = useSiteUrl()
-const recipeUrl = computed(() => `${siteUrl}/recipe/${id}`)
+const recipeUrl = computed(() => `${siteUrl}/recipe/${id}/`)
 
 useHead(() => {
   const r = recipe.value
@@ -277,7 +292,7 @@ useHead(() => {
       .join(', ')
     ld.datePublished = curated.datePublished
     ld.dateModified = curated.datePublished
-    ld.author = { '@type': 'Organization', name: 'Pantry to Store', url: `${siteUrl}/about` }
+    ld.author = { '@type': 'Organization', name: 'Pantry to Store', url: `${siteUrl}/about/` }
     ld.publisher = { '@type': 'Organization', name: 'Pantry to Store', url: siteUrl }
   }
   for (const key of Object.keys(ld)) if (ld[key] == null) delete ld[key]
@@ -290,7 +305,12 @@ useHead(() => {
       { property: 'og:description', content: metaDescription.value },
       { property: 'og:type', content: 'article' },
       { property: 'og:url', content: recipeUrl.value },
-      ...(r.image ? [{ property: 'og:image', content: r.image }] : []),
+      { property: 'og:site_name', content: 'Pantry to Store' },
+      ...(r.image ? [{ property: 'og:image', content: r.image }, { property: 'og:image:alt', content: r.title }] : []),
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: r.title },
+      { name: 'twitter:description', content: metaDescription.value },
+      ...(r.image ? [{ name: 'twitter:image', content: r.image }] : []),
     ],
     script: [
       { type: 'application/ld+json', innerHTML: JSON.stringify(ld) },
@@ -301,7 +321,16 @@ useHead(() => {
           '@type': 'BreadcrumbList',
           itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
-            { '@type': 'ListItem', position: 2, name: r.title, item: recipeUrl.value },
+            { '@type': 'ListItem', position: 2, name: 'Collections', item: `${siteUrl}/collections/` },
+            ...(hubs.value[0]
+              ? [{
+                  '@type': 'ListItem',
+                  position: 3,
+                  name: hubs.value[0].title,
+                  item: `${siteUrl}/collections/${hubs.value[0].slug}/`,
+                }]
+              : []),
+            { '@type': 'ListItem', position: hubs.value.length ? 4 : 3, name: r.title, item: recipeUrl.value },
           ],
         }),
       },
@@ -560,6 +589,21 @@ useHead(() => {
 
 .related {
   margin-top: 2.5rem;
+}
+
+.explore {
+  margin-top: 2.5rem;
+}
+
+.explore h2 {
+  margin: 0 0 1rem;
+  font-size: 1.375rem;
+}
+
+.explore__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .section__head {

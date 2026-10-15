@@ -35,18 +35,31 @@
 <script setup lang="ts">
 import { homeSections, collections, findCollection } from '../content/collections'
 import { curatedCards } from '../content/recipes'
+import { getDateSeedPlusDay, getDateSeed, seededShuffle } from '../utils/randomize'
 
 useSeoMeta({
   title: null, // brand default comes from the title template
   description:
     'Discover healthy, affordable recipes built around what you already have. Reduce food waste with smart meal prep and pantry-first cooking.',
+  ogTitle: 'Pantry to Store — Cook smart, eat well, waste less',
+  ogDescription:
+    'Discover healthy, affordable recipes built around what you already have. Reduce food waste with smart meal prep and pantry-first cooking.',
   ogType: 'website',
+  twitterTitle: 'Pantry to Store — Cook smart, eat well, waste less',
+  twitterDescription:
+    'Discover healthy, affordable recipes built around what you already have. Reduce food waste with smart meal prep and pantry-first cooking.',
 })
 useCanonical()
 
+const dateSeed = getDateSeed()
+const dateSeedPlusDay = getDateSeedPlusDay()
+
 function cardsFor(collectionSlug: string) {
   const col = findCollection(collectionSlug)
-  return curatedCards(col?.recipeIds ?? []).slice(0, homeSections.find((s) => s.collection === collectionSlug)?.limit ?? 6)
+  const ids = col?.recipeIds ?? []
+  const shuffled = seededShuffle(ids, dateSeed)
+  const limit = homeSections.find((s) => s.collection === collectionSlug)?.limit ?? 6
+  return curatedCards(shuffled.slice(0, limit))
 }
 
 // Site-level structured data (PRD §6.1): WebSite + SearchAction + Organization.
@@ -82,7 +95,7 @@ useHead(() => ({
               '@type': 'ListItem',
               position: index + 1,
               name: c.title,
-              url: `${siteUrl}/collections/${c.slug}`,
+              url: `${siteUrl}/collections/${c.slug}/`,
             })),
           },
         ],

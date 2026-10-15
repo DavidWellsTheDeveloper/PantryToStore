@@ -7,12 +7,17 @@ export function useSiteUrl(): string {
   return (config.public.siteUrl || '').replace(/\/$/, '')
 }
 
+// Production host (S3 static site behind CloudFront) 301s subpaths to a trailing
+// slash, so canonical/JSON-LD URLs must match the served URL to avoid
+// "page with redirect" in Search Console (PRD §9.3–9.4). Root stays as-is.
+export function canonicalPath(path: string): string {
+  const withLeading = path.startsWith('/') ? path : `/${path}`
+  return withLeading === '/' ? '/' : `${withLeading.replace(/\/+$/, '')}/`
+}
+
 export function useCanonical(path?: MaybeRef<string | undefined>) {
   const route = useRoute()
   const site = useSiteUrl()
-  const href = computed(() => {
-    const p = unref(path) ?? route.path
-    return `${site}${p.startsWith('/') ? p : `/${p}`}`
-  })
+  const href = computed(() => `${site}${canonicalPath(unref(path) ?? route.path)}`)
   useHead(() => ({ link: [{ rel: 'canonical', href: href.value }] }))
 }

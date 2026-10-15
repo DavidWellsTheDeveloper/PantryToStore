@@ -195,6 +195,16 @@
         <div class="recipe-grid">
           <RecipeCard v-for="r in results" :key="r.id" :recipe="r" />
         </div>
+        <div v-if="hasMore" class="loadmore">
+          <button
+            type="button"
+            class="btn btn--outline btn--md"
+            :disabled="loadingMore"
+            @click="loadMore"
+          >
+            {{ loadingMore ? 'Loading…' : 'Load more' }}
+          </button>
+        </div>
       </template>
 
       <template v-else-if="searched">
@@ -252,6 +262,9 @@ const results = ref<FoundRecipe[]>([])
 const pending = ref(false)
 const error = ref(false)
 const searched = ref(false)
+const loadingMore = ref(false)
+const pageSize = 12
+const hasMore = ref(true)
 let internal = false
 
 function toggle(list: 'intolerances' | 'cuisines', value: string) {
@@ -319,7 +332,7 @@ function applyFilters() {
   runSearch()
 }
 
-function payload() {
+function payload(baseOffset = 0) {
   const list = mode.value === 'pantry' && draft.value.trim()
     ? [...ingredients.value, draft.value.trim().toLowerCase()]
     : ingredients.value
@@ -333,22 +346,48 @@ function payload() {
   if (cuisines.value.length) p.cuisines = cuisines.value.join(',')
   if (maxTime.value > 0) p.time = String(maxTime.value)
   if (maxIng.value > 0) p.maxIng = String(maxIng.value)
+  p.number = String(pageSize)
+  if (baseOffset > 0) p.offset = String(baseOffset)
   return p
 }
 
 async function churn() {
-  const now = payload()
-  const qs = new URLSearchParams(now)
+  const p = payload(0)
+  const qs = new URLSearchParams(p)
   pending.value = true
   error.value = false
   try {
-    results.value = await spoonacularFetch<FoundRecipe[]>(`/api/spoonacular/search?${qs.toString()}`)
+    const res = await spoonacularFetch<FoundRecipe[]>(`/api/spoonacular/search?${qs.toString()}`)
+    results.value = res
+    hasMore.value = res.length === pageSize
     searched.value = true
   } catch {
     error.value = true
     searched.value = true
+    hasMore.value = false
   } finally {
     pending.value = false
+  }
+}
+
+async function loadMore() {
+  loadingMore.value = true
+  const nextOffset = results.value.length
+  const p = payload(nextOffset)
+  const qs = new URLSearchParams(p)
+  try {
+    const res = await spoonacularFetch<FoundRecipe[]>(`/api/spoonacular/search?${qs.toString()}`)
+    if (res.length === 0) {
+      hasMore.value = false
+    } else {
+      results.value.push(...res)
+      hasMore.value = res.length === pageSize
+    }
+  } catch {
+    error.value = true
+    hasMore.value = false
+  } finally {
+    loadingMore.value = false
   }
 }
 
@@ -360,9 +399,11 @@ async function runSearch() {
       draft.value = ''
     }
   }
-  const p = payload()
+  const p = payload(0)
+  const urlP: Record<string, string> = { ...p }
+  delete urlP.offset
   internal = true
-  await router.replace({ query: p })
+  await router.replace({ query: urlP })
   internal = false
   await churn()
 }
@@ -419,9 +460,7 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 useCanonical()
-</script>
-
-<style scoped>
+</script><style scoped>
 .hero {
   max-width: 38rem;
   margin-inline: auto;
@@ -692,5 +731,11 @@ useCanonical()
 
 .skeleton--card {
   height: 340px;
+}
+
+.loadmore {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
 }
 </style>

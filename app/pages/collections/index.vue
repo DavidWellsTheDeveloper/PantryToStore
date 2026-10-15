@@ -37,6 +37,12 @@ useSeoMeta({
   title: 'Browse Collections',
   description:
     'Browse Pantry to Store recipe collections — quick weeknight dinners, one-pot and slow-cooker meals, plant-forward recipes, and comfort food favorites built around what you already have.',
+  ogTitle: 'Recipe Collections — Pantry to Store',
+  ogDescription:
+    'Browse Pantry to Store recipe collections — quick weeknight dinners, one-pot and slow-cooker meals, plant-forward recipes, and comfort food favorites built around what you already have.',
+  twitterTitle: 'Recipe Collections — Pantry to Store',
+  twitterDescription:
+    'Browse Pantry to Store recipe collections — quick weeknight dinners, one-pot and slow-cooker meals, plant-forward recipes, and comfort food favorites built around what you already have.',
 })
 useCanonical()
 
@@ -53,7 +59,7 @@ useHead(() => ({
           '@type': 'ListItem',
           position: index + 1,
           name: c.title,
-          url: `${siteUrl}/collections/${c.slug}`,
+              url: `${siteUrl}/collections/${c.slug}/`,
         })),
       }),
     },

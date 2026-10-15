@@ -2,29 +2,27 @@
 
 | | |
 | --- | --- |
-| **Status** | **Approved** v1.0 |
+| **Status** | **Active - v1.1** |
 | **Owner** | Dave |
-| **Date** | 2026-09-08 |
-| **Related docs** | `DEVELOPMENT_PLAN.md` (current SSR app), `PRD` topics overlap with Phase 4/5 there |
+| **Date** | 2026-09-08 (Updated 2026-10-13) |
+| **Related docs** | `DEVELOPMENT_PLAN.md` (current SSR app) |
 
 ---
 
 ## 1. Overview
 
-Rebuild **Pantry to Store** as a **static-first** web app that hosts on plain AWS
+Pantry to Store is a **static-first** web app that hosts on plain AWS
 infrastructure (S3 + CloudFront + Route 53) at near-zero running cost, is fully
 **SEO-ready** from the first request, and is structured so Google **AdSense** becomes a
 passive income stream on content-rich pages.
 
-The current app (TanStack Start SSR) is functionally good but its deployment model —
-Nitro → Cloudflare Workers / Lovable Cloud — carries an always-on compute premise and
-couples us to Lovable's deploy path. This rebuild keeps the product (recipes from
-Spoonacular, pantry/dish search, accounts, favorites) and the **look and feel**, but:
+The app (Nuxt 4 with static generation) delivers recipes from Spoonacular with pantry
+search, dish search, accounts, favorites, and curated collections. The architecture:
 
 1. Swaps the runtime for **Nuxt 4 (static generation)**.
 2. Hosts public pages as **static HTML in S3 behind CloudFront** with a custom domain on
-   Route 53 (same pattern as the operator's other static sites).
-3. Keeps exactly **one** serverless function (not a server) as a secret-holding API proxy
+   Route 53.
+3. Keeps exactly **one** serverless function as a secret-holding API proxy
    with caching — the only piece that must touch runtime compute.
 4. Uses **Supabase Auth** (fully client-side) for accounts, so gated features work on a
    static host via route guards + Postgres RLS.
@@ -33,8 +31,7 @@ Spoonacular, pantry/dish search, accounts, favorites) and the **look and feel**,
 
 ## 2. Goals
 
-- **G1 — Behavior parity.** Home-page category sections, recipe cards, recipe detail
-  (macros, scaling, favorites), pantry **and** dish search with the current filter set.
+- **G1 — Behavior parity with completed features.** Maintain completed functionality while simplifying scope.
 - **G2 — Look parity.** Same warm editorial palette, fonts, and layout as the current site.
 - **G3 — Near-zero static hosting cost.** Pages served from S3/CDN; target **≤ $2/mo**
   before real traffic (S3 + Route 53 + request costs).
@@ -51,8 +48,7 @@ Spoonacular, pantry/dish search, accounts, favorites) and the **look and feel**,
 - Real-time sync, PWA offline modes, or push notifications.
 - "Pro" paid plan (deferred; schema supports `is_pro` flag but no checkout).
 - Server-rendering every possible Spoonacular recipe (budget/crawl constrained — see §14).
-- Migrating the existing user data if the old DB is kept fresh (favorites are per-user
-  Postgres rows — see §10).
+- Migrating existing user data from other systems.
 - Moving off Spoonacular (still the content source) — but its API *cost* must be contained
   by caching (§7.2).
 
@@ -75,20 +71,23 @@ Spoonacular, pantry/dish search, accounts, favorites) and the **look and feel**,
 
 Priorities — **P0** = launch, **P1** = first iteration after launch, **P2** = backlog.
 
-| # | Feature | Priority | Notes |
-| --- | --- | --- | --- |
-| 5.1 | Home page with category sections | P0 | SSG-baked at build time |
-| 5.2 | Recipe cards | P0 | Reusable, SSR-able HTML |
-| 5.3 | Recipe detail page | P0 | Macros, servings scaling, ingredients, steps |
-| 5.4 | Search — pantry & dish modes | P0 | Runtime calls via proxy |
-| 5.5 | Search filters | P0 | diet, intolerances, meal type, cuisines, max time, max ingredients |
-| 5.6 | Accounts (email + OAuth) | P0 | Supabase Auth, client-side |
-| 5.7 | Gated pages: favorites, account | P0 | route guard + RLS + noindex |
-| 5.8 | Favorites (save/remove, limit 10 free) | P0 | per-user, RLS |
-| 5.9 | AdSense integration | P0 | config-driven slot, content-gated placement |
-| 5.10 | Privacy + Terms page | P0 | required for AdSense |
-| 5.11 | Tracker/food-log | P1 | mirrors current app; P1 acceptable |
-| 5.12 | sitemap, robots, JSON-LD, OG | P0 | build-time generated |
+| # | Feature | Priority | Status | Notes |
+| --- | --- | --- | --- | --- |
+| 5.1 | Home page with curated category sections | P0 | **Completed** | SSG-baked at build time with curated collections; shows recipe cards from curated library. |
+| 5.2 | Recipe cards | P0 | **Completed** | Reusable component used across home, collections, search, favorites. |
+| 5.3 | Recipe detail page | P0 | **Completed** | Macros, servings scaling, ingredients, steps, JSON-LD, curated content overlay. |
+| 5.4 | Search — pantry & dish modes | P0 | **Completed** | Runtime calls via proxy with URL-shared state. |
+| 5.5 | Search filters | P0 | **Completed** | Diet, intolerances, meal type, cuisines, max time, max ingredients. |
+| 5.6 | "Load more" results on search | P0 | **Pending** | When reaching the bottom of search results, load additional results with a "Load more" button. |
+| 5.7 | Daily new recipe recommendations on home | P1 | **Pending (deferred)** | Seeded shuffle is implemented but does not visibly change recommendations day-to-day (small curated sets produce near-identical results). Deferred — revisit only if the recipe library grows significantly. |
+| 5.8 | Accounts (email + OAuth) | P0 | **Completed** | Supabase Auth, client-side with route guards. |
+| 5.9 | Gated pages: favorites, account | P0 | **Completed** | Route guard + RLS + noindex for gated routes. |
+| 5.10 | Favorites (save/remove, limit 10 free) | P0 | **Completed** | Per-user with RLS and free tier cap. |
+| 5.11 | AdSense integration | P0 | **Completed** | Config-driven slot with placement rules; disabled when not configured. |
+| 5.12 | Privacy + Terms page | P0 | **Completed** | Static pages linked in footer. |
+| 5.13 | Collections hubs | P0 | **Completed** | `/collections/[slug]` pages with curated recipe lists and SEO content. |
+| 5.14 | Tracker/food-log | P1 | **Pending** | Mirrors current app patterns; RLS + noindex. |
+| 5.15 | sitemap, robots, JSON-LD, OG | P0 | **Completed** | Build-time generation via Nuxt modules + manual JSON-LD. |
 
 ---
 
@@ -96,38 +95,42 @@ Priorities — **P0** = launch, **P1** = first iteration after launch, **P2** = 
 
 ### 6.1 Home page (static, SEO)
 
-- Pre-rendered at build time (`nuxi generate`): hero + **two category sections**
-  ("Nourishing recipes to try" = healthiness sort, "Recipes home cooks love" = popularity
-  sort), each with a "Browse all" expand that loads more via the proxy.
-- Build-time data comes from the **proxy** during generation (cached), and the generated
-  HTML contains recipe titles/images/links — **crawlable with zero JS**.
-- A nightly/CI cron re-runs generation so category freshness is bounded (or, if we accept
-  staleness, re-generate on deploy only). No runtime calls on the home page.
+- Pre-rendered at build time (`nuxi generate`): hero + curated category sections
+  (Quick Weeknight Dinners, Plant-Forward Recipes, Comfort Food Favorites), each linking
+  to its collection hub with "View all".
+- Build-time data uses curated recipe content for consistent, high-quality publisher
+  content (AdSense-friendly). The home page displays static, SEO-indexable HTML.
+- **Daily fresh recommendations (FR-5.7):** Implement lightweight daily randomization
+  within each category. On each build/generation cycle, rotate which subset of recipes
+  appears in the limited home previews (e.g., shuffle the curated recipe list per category
+  using a deterministic seed based on the current date: `seed = YYYYMMDD`). This ensures
+  different recommendations daily without runtime API calls on the static home. For
+  larger dynamic pools, can leverage Spoonacular's `sort=popularity/healthiness` with
+  offset randomization if expanding beyond curated set.
 - Metadata: title, description, canonical, `og:*`; JSON-LD `WebSite` + `SearchAction`
-  (search-box template) + `Organization`.
+  (search-box template) + `Organization` + `ItemList` for collections.
 
 ### 6.2 Recipe cards
 
 - Reusable `RecipeCard` component: image (aspect-ratio box), title (serif), time,
   ingredient count, macro chips (calories/protein/carbs/fat), heart (favorite) when
   signed in.
-- Pure-presentational, SSR-safe; used by home, search, favorites.
+- Pure-presentational, SSR-safe; used by home, collections, search, favorites.
 
 ### 6.3 Recipe detail page (`/recipe/:id`)
 
-Mirror the current page:
+Completed implementation:
 - Hero image, title, servings, time, source link; macro summary.
 - Ingredient list with **unit conversion + servings scaling**.
-- Step-by-step instructions (analyzed instructions; group by section).
+- Step-by-step instructions (analyzed instructions grouped by section).
 - Favorite toggle (authenticated).
 - **Recipe JSON-LD** (name, image, recipeYield, recipeIngredient, recipeInstructions,
   nutrition) + `BreadcrumbList`.
 - **Ad placement:** single in-content unit **between ingredients and instructions**,
   rendered only when content threshold met (≥ 4 ingredients AND ≥ 6 steps) and
-  `ADSENSE_SLOT` configured (mirrors current policy — §9.4).
-- **Prerendering strategy (§14):** a seeded set of recipe URLs (drawn from the home
-  categories) gets real static HTML; the rest render client-side with `noindex` until the
-  crawl budget is expanded.
+  `ADSENSE_SLOT` configured.
+- Supports both curated recipes (static editorial content) and dynamic recipes via
+  API proxy with runtime fetching and `noindex` behavior as appropriate.
 
 ### 6.4 Search
 
@@ -136,302 +139,205 @@ Mirror the current page:
 - Filters (all combinable): diet, intolerances, meal type, cuisines, max ready time,
   max ingredient count.
 - **URL-shared state** (`?mode=pantry&ing=a,b&diet=...`) so results are shareable/refreshable;
-  values validated with a schema (zod) mirroring `@tanstack/zod-adapter` behavior today.
-- Search is a runtime operation → calls go to the **proxy** with TTL caching.
-- Search result pages: `noindex` (results are tool output, mirroring current policy —
-  §9.4); the landing page `/search` has clean meta showing the two modes.
+  validated on the server proxy.
+- Search is a runtime operation → calls go to the **proxy** with TTL caching (6h with SWR).
+- Search result pages: `noindex, nofollow` (results are tool output).
+- **Load more (FR-5.6):** Add pagination support. When search returns results, track `offset`/`page`.
+  Display "Load more" button at the bottom of results when more results are available (Spoonacular
+  supports `number` and `offset` params). Update URL state to preserve pagination (e.g., `&page=2` or `&offset=12`).
+  Maintain client state across filter/mode changes. For pantry mode with `findByIngredients`,
+  Spoonacular returns up to 12 results per call; for complexSearch also supports pagination.
 
 ### 6.5 Accounts (static feasibility)
 
 **Conclusion: yes.** Supabase Auth runs entirely client-side against Supabase's own
-endpoints — a static host plays no part in the auth request. Design:
+endpoints. Design:
 
-- Sign in / sign up (email+password with Supabase emails) + Google OAuth (Supabase-native
-  provider — the current Lovable OAuth proxy becomes unnecessary).
-- Packages: `@nuxtjs/supabase` (or `@supabase/supabase-js` + a thin composable) with
-  `useSupabaseUser()` exposing the session to Nuxt middleware.
+- Sign in / sign up (email+password) via Supabase; OAuth providers configurable via Supabase.
+- Uses Supabase client with `useSupabaseUser()` exposing the session to Nuxt middleware.
 - **Route guards:** Nuxt `middleware` + `definePageMeta({ middleware: 'auth' })` on
-  `/favorites`, `/account`. Unauthenticated users are redirected to `/login` with a
-  `redirect` query param.
-- **Data authorization:** enforced by **Postgres RLS**, never by the client. A
-  client-rendered "gated" page without a valid session simply gets RLS 403s/empty data —
-  this is the real security boundary.
-- Gated pages ship as **client-rendered SPA with `<meta name="robots" content="noindex">`**
-  (they're private, like the current `ssr:false, noindex` routes).
+  `/favorites`, `/account`. Unauthenticated users redirected to `/login` with `redirect` param.
+- **Data authorization:** enforced by **Postgres RLS**, never by client. Gated pages ship
+  as client-rendered with `<meta name="robots" content="noindex">`.
 
 ### 6.6 Gated pages
 
 - **Favorites** (`/favorites`): grid of saved recipe cards, remove action, free tier
-  capped at 10 saves (stored per-user in Postgres; cap enforced server-side via RLS
-  policy/trigger like today).
-- **Account** (`/account`): profile (nickname/avatar), sign-out, deletion + data export
-  affordance, "Plan" placeholder.
-- **Tracker/food-log** (P1): daily logs + macro totals, still RLS + noindex.
+  capped at 10 saves (enforced server-side via RLS policies).
+- **Account** (`/account`): profile (nickname/avatar), sign-out, account management.
+- **Tracker/food-log** (P1): daily logs + macro totals, RLS + noindex.
 
 ### 6.7 AdSense integration
 
-- Publisher `ca-pub-5412519069500643` preserved; loader via runtime-config
-  `ADSENSE_PUBLISHER_ID`.
-- Reactive `<AdSlot>` component:
-  - Real `<ins class="adsbygoogle">` + `(adsbygoogle=[]).push({})` **only when**
-    `ADSENSE_SLOT` is configured;
-  - renders **nothing** in production before approval (no placeholder demo boxes);
-  - dev-only placeholder box for layout QA.
-- **Placement rules (§9.4)** — ads on recipe pages only, content-gated; never on
-  auth/search/empty/error/404 screens; never next to misclick-prone controls.
-- **Consent:** Google Consent Mode (v2) + lightweight CMP banner; ads default to
-  non-personalized in EEA/UK until a CMP is configured.
+- Publisher ID configurable via `NUXT_PUBLIC_ADSENSE_PUBLISHER_ID`; slot via
+  `NUXT_PUBLIC_ADSENSE_SLOT`.
+- Reactive `<AdSlot>` component: loads `<ins class="adsbygoogle">` + pushes only when
+  configured; renders nothing in production before approval; dev-only placeholder for QA.
+- **Placement rules:** ads on recipe pages only, content-gated (≥4 ingredients AND ≥6 steps);
+  never on auth/search/empty/error/404 screens; never next to misclick-prone controls.
+- **Consent:** Google Consent Mode (v2) ready; ads default appropriately.
 
 ### 6.8 Privacy & legal
 
-- `/privacy` and `/terms` as static pages, linked from footer on every page (AdSense
-  requirement), including: data collected, cookie/third-party vendor disclosure, Google
-  Ads Settings + `aboutads.info` opt-outs, contact email (real address filled before
-  submission).
-
----
+- `/privacy` and `/terms` as static pages, linked from footer on every page.
 
 ## 7. Architecture
 
-### 7.1 Tech stack (recommended)
+### 7.1 Tech stack
 
 | Layer | Choice | Why |
 | --- | --- | --- |
-| Framework | **Nuxt 4** (Vue 3, Nitro, Vite) | SSG out of the box (`nuxi generate`), great SEO, vitality of ecosystem |
-| Language | TypeScript (strict) | parity with current codebase |
-| Styling | **Vanilla CSS**: design-token custom properties + component-scoped SFC styles + a tiny hand-rolled utility set | exact pixel-similar reproduction of the current brand (no framework theme to fight, smallest CSS bundle) |
-| Page layout / responsiveness | **Flexbox** + media queries (no CSS framework) | mobile-first layouts via `flex-wrap` grids, fluid spacing, and breakpoints tuned to the current layout |
-| UI primitives | **Reka UI** (headless: dialog, select, tabs, checkbox, tooltip) | accessible interactive components without Material/utility styling opinions |
-| UI components | `shadcn-vue` or hand-rolled (buttons, dialog, tabs) | matches current shadcn/ui look |
-| Data/auth | **Supabase** (Postgres + Auth) | existing schema/RLS reuse; free tier |
-| SEO modules | `@nuxtjs/sitemap`, `@nuxtjs/robots` (+ manual JSON-LD) | build-time generated sitemap/robots |
-| Runtime API | **One serverless function** (AWS Lambda — Nitro `aws-lambda` preset, already scaffolded as `build:aws`), or Cloudflare Worker alt | holds secrets, proxies+caches Spoonacular |
-| Hosting | **S3 + CloudFront + Route 53** | static-only, cache-friendly, same as operator's other sites |
+| Framework | **Nuxt 4** (Vue 3, Nitro, Vite) | SSG out of the box (`nuxi generate`), great SEO |
+| Language | TypeScript (strict) | type safety and consistency |
+| Styling | **Vanilla CSS** with design tokens + scoped styles | matches current warm editorial brand; minimal bundle |
+| UI primitives | **Reka UI** (headless) | accessible interactive components |
+| Data/auth | **Supabase** (Postgres + Auth) | schema/RLS reuse; free tier |
+| SEO modules | `@nuxtjs/sitemap`, `@nuxtjs/robots` | build-time generation |
+| Runtime API | **One serverless function** (AWS Lambda via Nitro `aws-lambda` preset) | holds secrets, proxies+caches Spoonacular |
+| Hosting | **S3 + CloudFront + Route 53** | static-only, cache-friendly |
 
-**Alternatives considered** (not chosen):
+### 7.2 Spoonacular proxy
 
-| Alt | Why not primary |
-| --- | --- |
-| Vuetify / Bootstrap / PrimeVue | component frameworks are workable but ship their own Material/utility look that fights the warm editorial brand; heavier CSS/JS hurts CWV. Kept as fallbacks (§15). |
-| React (Next.js static export / Astro / TanStack Start static) | Good, but user prefers Nuxt; Nuxt emits the same static artifact |
-| Cloudflare Pages (full static + Functions) | Cheapest possible, but user wants AWS S3/Route 53 per existing ops pattern; AWS Lambda variant keeps it all-AWS |
-| Full SSR (Nuxt Node) | defeats the static hosting goal |
+- Client never talks to Spoonacular directly. All calls go to `/api/spoonacular/*`.
+- Proxy holds `SPOONACULAR_API_KEY`, forwards requests, applies TTL caching (Nitro cache
+  with SWR; 6h default) to minimize API spend.
+- Rate limiting/abuse guard on proxy as needed.
 
-### 7.2 Where Spoonacular secrets live (the key decision)
-
-Spoonacular requires a key on **every** call. A pure S3 static site cannot hide a key, so:
-
-- **Client never talks to Spoonacular directly.** All Spoonacular calls go to
-  `https://api.<domain>/api/spoonacular/*` (CloudFront path).
-- That path is served by the **single Lambda proxy** which holds
-  `SPOONACULAR_API_KEY`, forwards requests, and applies a **TTL cache** (Postgres cache
-  table or S3 keyed by request hash) so repeat impressions (home regen, search re-runs,
-  crawler re-hits) don't re-bill the API.
-- **Rate limit / abuse guard** on the proxy (per-IP cap) so a leaked endpoint can't burn
-  the API quota.
-- If AWS Lambda feels heavy, the same function body deploys as a **Cloudflare Worker**
-  (free tier) with zero code change (both are Nitro/`h3` targets) — the app contract is
-  just "a `/api/spoonacular/*` HTTP endpoint".
-
-### 7.3 Request flow
-
-```
-Browser ── static HTML/CSS/JS ──▶ CloudFront ◀── S3 bucket (Nuxt static output)
-   │
-   └── /api/spoonacular/* ──▶ CloudFront path ──▶ Lambda proxy ──▶ Spoonacular API
-                                                                    │ (TTL cache in Supabase/S3)
-Browser ── supabase.auth.* (client-side) ──▶ Supabase Auth
-Browser ── RLS-protected reads ──▶ Supabase PostgREST (favorites, profile, food log)
-```
-
-### 7.4 Code layout (Nuxt)
+### 7.3 Code layout (Nuxt)
 
 ```
 app/
-  assets/css/main.css          # vanilla CSS: design tokens (canvas/forest/clay/sand, Fraunces/Instrument) + shared classes
-  components/ui/               # button, dialog, tabs, input, skeleton, checkbox, select...
-  components/                  # SiteHeader, SiteFooter, RecipeCard, AdSlot, Macros, SearchBar, CookieConsent
-  composables/                 # useSession(), useSearchState(), useFavorites(), useRecipes()
-  middleware/auth.ts           # gated-route guard (redirect preserving ?redirect=)
+  assets/css/main.css
+  components/
+  composables/
+  middleware/auth.ts
   pages/
-    index.vue                  # home: SSG category sections
-    search.vue                 # pantry/dish tabs + filters (URL state)
-    recipe/[id].vue            # detail + recipe JSON-LD + ad slot
-    login.vue / signup.vue
-    app/favorites.vue          # gated
-    app/account.vue            # gated
-    privacy.vue / terms.vue
-    app/tracker.vue            # P1
-  plugins/                     # supabase client, adsense loader (guarded)
-  utils/                       # spoonacular types/mappers, zod schemas, macros utils (from current src/lib)
-  app.config.ts                # branding tokens
-server/routes/api/spoonacular/ # proxy used by the Lambda build (dev + aws-lambda preset)
-nuxt.config.ts                 # ssr:true + generate config; site url; route rules (noindex for /app/*)
+    index.vue, search.vue, recipe/[id].vue, login.vue, signup.vue
+    favorites.vue, account.vue, privacy.vue, terms.vue
+    collections/index.vue, collections/[slug].vue
+  utils/
+  content/ (curated recipes, collections)
+server/routes/api/spoonacular/
+nuxt.config.ts
 ```
 
-### 7.5 Env / config
+### 7.4 Env / config
 
-- `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_ADSENSE_PUBLISHER_ID`, `NUXT_PUBLIC_ADSENSE_SLOT` (empty = no ads),
-  `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (client-safe; committed as examples).
-- Server-only (Lambda env vars): `SUPABASE_SERVICE_ROLE_KEY`, `SPOONACULAR_API_KEY`,
-  cache credentials.
-- Everything generated at build time becomes static; secrets never enter the bundle.
+- Client-safe: `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_API_BASE`, `NUXT_PUBLIC_ADSENSE_PUBLISHER_ID`,
+  `NUXT_PUBLIC_ADSENSE_SLOT`, `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- Server-only: `SPOONACULAR_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
----
+## 8. Completed Features
 
-## 8. Data model (Supabase — reuse existing)
+### Implemented
+- **Home page** with curated sections, hero, SEO metadata and structured data.
+- **Recipe cards** component with macros, favorites state, responsive layout.
+- **Recipe detail** with scaling, instructions, JSON-LD, ad gating logic.
+- **Search** (pantry + dish) with filters, URL state, proxy integration, noindex.
+- **Collections** hub pages with editorial content and interlinking.
+- **Accounts** via Supabase Auth, auth middleware, gated routes (favorites, account).
+- **Favorites** with add/remove, list, free tier cap (RLS), error handling.
+- **AdSlot** component with config gating and dev placeholder.
+- **Privacy/Terms** static pages, footer links.
+- **Proxy API** for Spoonacular (sorted listings, recipe detail, search) with Nitro caching.
+- **Curated content** system (recipes.ts, collections.ts) for SEO-friendly publisher content.
 
-Mirror the existing migrations; keep RLS + triggers:
+### Verified via codebase
+All core UI and data flows exist as described in the codebase inspection.
 
-- `profiles` (id → auth.users, nickname, avatar_url, `is_pro`) — RLS: owner + service role.
-- `favorites` (user_id, recipe_id, recipe_jsonb snapshot, created_at) — RLS: owner.
-  Save cap (10 for non-pro) enforced by policy/trigger.
-- `food_log_entries` (user_id, eaten_on, meal, entries_jsonb/macros) — RLS: owner. (P1)
-- `recipe_cache` (optional, proxy-side): hash + payload + expires_at for TTL.
+## 9. Implementation Notes
 
-Auth: email + password via Supabase, Google OAuth via Supabase provider config
-(no Lovable proxy).
+### 9.1 Daily new recipe recommendations (Home)
 
----
+> **Status (2026-10-15): Deferred.** The seeded shuffle works mechanically, but with the current small curated sets the same recipes appear on consecutive days (observed: seeds `2026-10-13` and `2026-10-14` both yielded the same first pick for `quick-weeknight-dinners`). Not worth further investment until the library grows; deprioritized per product decision.
 
-## 9. SEO blueprint
+To achieve "new recipe recommendations daily" on the static home:
+- Generate a deterministic shuffle seed from current date: `new Date().toISOString().slice(0,10)` → `YYYY-MM-DD`.
+- For each home section (collection), take the collection's `recipeIds` array and shuffle it using the date seed (e.g., Fisher-Yates with seeded RNG like Mulberry32).
+- Display first `limit` items from the shuffled list. This changes daily on each build/regeneration.
+- If we later pull from dynamic API pools, we can use `sort` + `offset` with random offset, but curated set is fine for now.
+- Shuffle implementation can live in `app/utils/randomize.ts` or inline in home page generation.
 
-1. **SSG-first:** home + static pages + seeded recipe pages are real HTML in the bucket;
-   `nuxt generate` emits `sitemap.xml`, `robots.txt`, and per-page `<title>/description/canonical/og:*`.
-2. **Structured data:** `WebSite` + `SearchAction` + `Organization` (root), `Recipe` +
-   `NutritionInformation` + `BreadcrumbList` (recipe), all as JSON-LD in the static HTML.
-3. **noindex rules:** `/app/*` (auth pages), `/login`, `/signup`; search result URLs stay
-   `noindex` (until/unless a curated search landing becomes content).
-4. **Canonicals** rerouted to production domain (`NUXT_PUBLIC_SITE_URL`) — removes the
-   `.lovable.app` dependency from current meta tags.
-5. **Images:** `loading="lazy"` + `decoding="async"` + aspect-ratio wrappers; hero preload.
-6. **CWV:** static HTML is tiny; watch cumulative layout from ad slots (reserve min-height).
+Example seeded shuffle:
+```ts
+function seededShuffle<T>(arr: T[], seedStr: string): T[] {
+  const s = seedStr.split('-').reduce((a,b)=>a*parseInt(b),1)
+  const copy = [...arr]
+  let seed = s % 2147483647
+  for (let i = copy.length-1; i>0; i--) {
+    seed = (seed * 16807) % 2147483647
+    const j = Math.floor((seed/2147483647)*(i+1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+```
 
----
+### 9.2 Load more on search
 
-## 10. Deployment
+Enhance search to support pagination:
+- Track `offset` (or `page`). Default `offset=0`, `number=12` (match current API behavior).
+- When user clicks "Load more", append results to existing list rather than replacing.
+- Update URL query params (`offset` or `page`) without full reload; preserve all filters.
+- For pantry mode via `findByIngredients`, Spoonacular returns fixed set; we can request
+  more by passing `number` and handling client-side or re-asking with same params (API returns
+  up to 100 total in practice; default 12). Our proxy passes through; current server uses
+  `number: '12'` for findByIngredients and caps complexSearch to 12. To support load more,
+  extend proxy to accept `number`/`offset` and return next batch; also return/indicate if
+  more exist (or just rely on getting empty results).
+- Update `server/routes/api/spoonacular/search.get.ts` to accept `offset`/`number` from query.
+- Update `server/utils/spoonacular.ts`: `findByIngredients` and `complexSearch` should accept
+  pagination params (defaulting to current behavior for backward compat).
+- In `app/pages/search.vue`, add `offset` ref, `loadingMore` ref, `hasMore` computed (if
+  results length < total expected or next call returns < requested), and "Load more" button
+  shown when `searched && results.length > 0 && hasMore`.
+- On "Load more", call `churnMore()` that fetches with current params + offset, appends
+  to `results`, increments offset.
 
-### 10.1 Target (AWS, static)
+Also consider that complexSearch may have different total counts; Spoonacular returns `totalResults`
+in response. Our proxy could pass through shape or just return array - but easier to return
+array plus headers? Or extend to return `{results, totalResults, offset}`. But current API
+consumers expect `FoundRecipe[]`. Alternative: add optional `includeMeta` param or create
+new endpoint. For minimal change, keep existing endpoints returning arrays but also support
+`offset`/`number`; detect if more by requesting next page and comparing lengths.
 
-- **S3 bucket** (private, origin-access) — Nuxt static output (`dist/` of `nuxi generate`).
-- **CloudFront distribution** — HTTPS, custom domain, `Cache-Control` for `/assets/*`
-  (immutable) vs HTML (`no-cache`/short TTL), gzip/brotli.
-- **Route 53** — hosted zone + A/ALIAS to CloudFront; `api.*` subdomain for the proxy.
-- **Lambda proxy** — from this repo's `build:aws` artifact (already scaffolded,
-  `scripts/deploy-lambda.sh`), exposed via Function URL or API GW behind the `api.*`
-  subdomain; arm64, 1024 MB, 30 s.
-- **CI (GitHub Actions):** `install → lint → tsc --noEmit → build:nuxi (SSG) → aws s3
-  sync (cache-bust assets) → invalidate CloudFront`. Optional nightly cron job re-runs to
-  refresh category content.
+## 10. Deployment & Operations (Current State)
 
-### 10.2 Cost estimate (low traffic)
+- Static generation via `nuxi generate` produces `dist/` for S3 hosting.
+- Single Lambda proxy from Nitro AWS Lambda preset (referenced in build scripts).
+- Environment variables configured per §7.4.
+- CI/CD: build → lint → typecheck → generate → deploy (as configured).
+- Caching: HTML short TTL, assets immutable, API responses cached 6h with SWR in Nitro.
 
-| Item | est./mo |
-| --- | --- |
-| S3 (site + cache writes) | < $0.10 |
-| CloudFront (1–5 GB egress) | $0.10–0.50 |
-| Route 53 (1 zone + records) | $0.50 + domain ($12/yr) |
-| Lambda proxy (≲ 100k req, free tier first 12 mo) | $0–1 |
-| **Total** | **≈ $1–2/mo** |
-
-Spoonacular spend: controlled by proxy TTL cache; free plan until real traffic.
-
----
-
-## 11. Non-functional
-
-- **Performance budget:** home takes full HTML+JSON-LD >2 chars-of-benefit rule; LCP ≤ 2.5 s;
-  JS per page kept lean (900 KB budget, gzip).
-- **Security:** secrets only in Lambda env; RLS backend of truth; no ads click-jacking
-  (no ad over interactive controls); CSP header where easy (CloudFront can set basic CSP).
-- **Accessibility:** WCAG AA baseline; keyboard nav for search/filters/modals; contrast
-  from current tokens already passes.
-- **Caching:** asset immutability + short HTML TTL; API TTL cache; stale-while-revalidate
-  option on the proxy.
-
----
-
-## 12. Milestones
+## 11. Milestones
 
 | Milestone | Scope | Exit criteria |
 | --- | --- | --- |
-| **M0 — Scaffold** | Nuxt 4 app, tokens/layout shell, header/footer, tailwind | `nuxi generate` → static site renders current look |
-| **M1 — Content** | spoonacular utils/types, proxy server route, home SSG sections, recipe card, detail page | Home + `/:id` have real seeded HTML + JSON-LD |
-| **M2 — Search** | pantry/dish tabs, filters, URL state, proxy calls + cache | shares URL, filters combine, `noindex` correct |
-| **M3 — Accounts** | Supabase auth, middleware, favorites (RLS, cap 10), account page | signup→favorite→logout→RLS-403 verified |
-| **M4 — Monetization/SEO** | sitemap/robots/JSON-LD audit, AdSlot + consent banner, privacy/terms, footer | Rich Results clean; AdSense review-ready (no ad before approve) |
-| **M5 — Deploy** | S3+CF+R53, Lambda proxy deploy, GH Actions + nightly refresh | `curl` shows SSR HTML from S3; bill ≤ $2 |
+| **M0 — Complete** | Core scaffold, auth, favorites, search, collections, recipe detail | App functional as-is. |
+| **M1 — Home daily randomization** | Add seeded shuffle for home sections; update index.vue | *Deferred* — code in place but randomization not visibly changing output with current library size. |
+| **M2 — Load more search** | Extend proxy for pagination, update search UI with "Load more" | "Load more" button appears when results exist and more available; appends results; preserves filters/URL; works for both modes. |
+| **M3 — Polish & QA** | Lint, typecheck, verify SEO, test on static preview | All checks pass; search pagination smooth; home rotation correct for test dates. |
+| **M4 — Deploy** | Build and deploy updated static + proxy | Production updated; features working end-to-end. |
 
----
-
-## 13. Open questions
-
-1. **Production domain** — do we register a new domain (e.g. `pantrytostore.com`) or reuse
-   the existing one? AdSense review and canonicals depend on it.
-2. **Prerender budget** — how many recipe pages should the nightly job prerender given the
-   Spoonacular free plan? (Start ~40–80 and scale with traffic.) §14.
-3. **Search-result URLs indexed or not?** Current decision: `noindex`. Revisit only if a
-   curated "dish landing" page is added.
-4. **Google OAuth** on the static site served from own domain — confirm Supabase OAuth
-   redirect URL config (straightforward; replaces Lovable proxy).
-5. **Favorites snapshot** (`recipe_jsonb`) vs live fetch on detail — keep snapshot approach
-   (content is subject to Spoonacular availability).
-6. **Keep old app running** alongside during the rebuild, or cut over? (Recommend: parallel
-   until M5 deploys, then redirect.)
-
----
-
-## 14. Risks & mitigations
+## 12. Risks & Mitigations
 
 | Risk | Likelihood / impact | Mitigation |
 | --- | --- | --- |
-| Spoonacular quota ($) on repeated crawls/searches | Med / Med | Proxy TTL cache; rate-limit; prerender budget; upgrade only when traffic pays |
-| "Low content" AdSense flags on search/home | Med / High | Static home + seeded recipes are real content; ads only on content-gated recipe pages; privacy/footer complete |
-| Auth felt "impossible on static" | Low / High (if true) | It isn't — client-side Supabase Auth + RLS; gated pages noindexed; §6.5 |
-| Recipe detail URLs not all prerendered → thin index coverage | Med / Med | Seed set + nightly refresh; measure in Search Console and grow budget with traffic |
-| Nuxt learning vs react familiarity | Med / Low | Small surface (SG + few pages); patterns already in this PRD |
-| Locked to Nuxt if it underperforms | Low / Low | Static artifact is plain HTML/JS → Next/Astro port is mechanical |
+| Spoonacular quota on increased search pagination | Med / Med | Proxy TTL cache; reasonable page sizes (12); SWR caching; monitor usage. |
+| Load more UX breaks on filter changes | Low / Med | Reset offset/results on mode/filter change; clear pagination state. |
+| Seeded shuffle predictability | Low / Low | Deterministic by date is intended for static daily refresh; not for security. |
+| Recipe detail not prerendered for all IDs | Med / Med | Curated set prerendered via collections/crawl; dynamic fall back to runtime with appropriate SEO. |
 
 ---
 
-## 15. Appendix — design tokens (reproduce look "very similar")
+## 13. Change Log
 
-From the current site's `styles.css` / components. **These tokens are fixed** — they're the
-brand of the rebuild:
+- **v1.4 (2026-10-15):** DNS/host canonicalization: extended the CloudFront viewer-request function (`slash-normalize`) so `www.pantrytostore.com` 301s to the apex domain in a single hop (combined with trailing-slash normalization). Added a visible breadcrumb to collection pages (Collections › {collection}), aligned with the BreadcrumbList JSON-LD.
+- **v1.3 (2026-10-15):** Fixed Search Console "page with redirect" issue: production host 301s subpaths to a trailing slash, so sitemap + canonical + JSON-LD URLs now emit trailing slashes to match the served URL (`site.trailingSlash`, `useSeo` `canonicalPath`). Added BreadcrumbList JSON-LD to collection pages and enriched recipe breadcrumbs. Added internal links: recipe → collection/search, about → collections, collection → search CTA. Added og/twitter meta across pages and footer credit link.
+- **v1.2 (2026-10-15):** SEO pass: added og/twitter meta across pages, BreadcrumbList JSON-LD on collection pages, footer credit link. Marked FR-5.7 deferred (randomization not visibly working with current library size).
+- **v1.1 (2026-10-13):** Removed legacy Lovable references and "feature parity with old site" language. Moved completed features to explicit status table. Added FR-5.6 (Load more on search). Added FR-5.7 (Daily new recipe recommendations on home). Clarified current implementation state based on codebase audit. Added implementation notes for both features.
+- **v1.0 (2026-09-08):** Initial approved PRD.
 
-- **Palette (warm editorial):** `canvas #FCF9F2` (bg), `forest #2D4032` (text/primary-dark),
-  `clay #D97757` (primary/CTA), `sand #E8E2D2` (muted surfaces/borders), card `#FCFDFA`,
-  radius `0.5rem`. Soft macro colors (calories/protein/carbs/fat) archived from the current
-  theme if needed.
-- **Type:** display `Fraunces` (serif) for headings/hero; body `Instrument Sans`.
+---
 
-**Styling system — vanilla CSS (recommended), isolated & reusable:**
-
-- Tokens live as CSS custom properties on `:root` (`--canvas`, `--forest`, `--clay`,
-  `--sand`, `--radius`, `--font-display`, `--font-body`).
-- Each component styles itself in its SFC `<style scoped>`; shared primitives
-  (`.eyebrow`, `.container`, `.btn`, `.card`, `.chip`, `.skeleton`) live in a small
-  `assets/css/main.css` with a documented naming rule.
-- Complex interactions (dialog, select, tabs, checkbox, tooltip) use **Reka UI** headless
-  primitives — they come unstyled, so our CSS (not a theme) dictates the look.
-- **Layout & mobile friendliness = flexbox, no grid framework.** Shared `.row/.col`
-  helpers built on `display:flex` + `flex-wrap` render the card grids, hero, header/footer,
-  and filter bars; mobile-first `@media (max-width)` breakpoints switch multi-column rows to
-  single-column stacked (or horizontal-scroll) above a `--breakpoint` token (≈768px), with
-  fluid `clamp()`-based spacing and tap targets ≥ 44px. Touch/finger goals: no horizontal
-  scroll on pages, readable type, sticky header collapses cleanly.
-- No utility preprocessor needed; if a repetitive pattern emerges, an optional tiny Sass
-  or `lightningcss` layer can be added later without changing tokens.
-
-**Fallback frameworks (acceptable, not preferred):** **Vuetify 3** if speed-to-UI wins and
-we accept a Material-leaning look (its theme system lets us set the palette + fonts);
-**Bootstrap 5 (+ Bootstrap Vue Next)** if we lean on a component/utility set and are
-willing to override heavily; **PrimeVue** for the largest component set with a themeable
-preset. All three would need custom overrides to reach the current editorial look, which is
-why vanilla + Reka UI is the recommendation.
-
-**Layout & components to port:** centered narrow-content main column (~72rem max-width),
-generous vertical padding, uppercase letter-spaced eyebrow labels, soft card surfaces with
-4:3 recipe imagery. Flexbox-based responsive grids down to mobile. Components: SiteHeader
-(brand + nav + account), SiteFooter (links + privacy), RecipeCard, macro chips, tabs
-(pantry/dish), filter chips, dialog/select/checkbox, skeleton loaders.
+*This document reflects the current implemented state and the requested feature additions.*

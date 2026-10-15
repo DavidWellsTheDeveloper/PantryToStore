@@ -7,10 +7,13 @@ export default defineNuxtConfig({
 
   modules: ['@nuxtjs/sitemap', '@nuxtjs/robots'],
 
-  // Canonical origin for sitemap/robots/SEO (PRD §9.4). Pantry to Store currently
-  // owns pantrytostore.com in Route 53; M5 wires the DNS/CloudFront.
+  // Canonical origin for sitemap/robots/SEO (PRD §9.4). DNS/CloudFront are live;
+  // pantrytostore.com is the canonical host (www also resolves but is not canonical).
   site: {
     url: process.env.NUXT_PUBLIC_SITE_URL || 'https://pantrytostore.com',
+    // Production host (S3 static website behind CloudFront) 301s every subpath to a
+    // trailing slash, so canonical + sitemap URLs must match (PRD §9.3–9.4).
+    trailingSlash: true,
   },
   robots: {
     disallow: ['/login', '/favorites', '/account', '/search'],

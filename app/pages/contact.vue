@@ -45,6 +45,10 @@ useSeoMeta({
   title: 'Contact',
   description:
     'Contact Pantry to Store — recipe requests, corrections, privacy and account data requests, partnerships, and press.',
+  ogTitle: 'Contact · Pantry to Store',
+  ogDescription: 'Contact Pantry to Store — recipe requests, corrections, privacy and account data requests, partnerships, and press.',
+  twitterTitle: 'Contact · Pantry to Store',
+  twitterDescription: 'Contact Pantry to Store — recipe requests, corrections, privacy and account data requests, partnerships, and press.',
 })
 useCanonical()
 </script>

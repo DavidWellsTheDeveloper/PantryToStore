@@ -11,7 +11,10 @@
         <NuxtLink to="/privacy" class="links__item">Privacy</NuxtLink>
         <NuxtLink to="/terms" class="links__item">Terms</NuxtLink>
       </nav>
-      <p class="copyright">© 2026 Pantry to Store</p>
+      <div class="footer-meta">
+        <p class="copyright">© 2026 Pantry to Store</p>
+        <a href="https://focowebsites.com" target="_blank" rel="noopener" class="foco-link">Made with ♥ by Foco Websites</a>
+      </div>
     </div>
   </footer>
 </template>
@@ -47,10 +50,29 @@
   color: var(--muted-foreground);
 }
 
-.copyright {
+.footer-meta {
   flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
   margin: 1rem 0 0;
+  align-items: baseline;
+}
+
+.copyright {
+  margin: 0;
   font-size: 0.8125rem;
   color: color-mix(in srgb, var(--muted-foreground), transparent 20%);
+}
+
+.foco-link {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--muted-foreground), transparent 40%);
+  text-decoration: none;
+}
+
+.foco-link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
 }
 </style>
