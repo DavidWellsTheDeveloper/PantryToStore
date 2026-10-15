@@ -34,10 +34,14 @@
         <RecipeCard v-for="r in cards" :key="r.id" :recipe="r" />
       </div>
 
-      <div class="cta card panel">
-        <p>Cooking from what you have? Find recipes that use the ingredients already in your kitchen.</p>
-        <NuxtLink to="/search" class="btn btn--outline btn--sm">Search by ingredient →</NuxtLink>
-      </div>
+      <section class="cta card" aria-labelledby="collection-cta-title">
+        <p class="eyebrow">Search by ingredient</p>
+        <h2 id="collection-cta-title" class="cta__title">Cook with what you already have</h2>
+        <p class="cta__text">
+          Tell us which ingredients are in your kitchen and we'll find recipes that use them.
+        </p>
+        <NuxtLink to="/search" class="btn btn--primary">Find recipes →</NuxtLink>
+      </section>
 
       <nav v-if="others.length" class="more" aria-label="More collections">
         <p class="eyebrow">Keep browsing</p>
@@ -175,16 +179,28 @@ useHead(() => {
 
 .cta {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   margin-top: 2.5rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--secondary);
 }
 
-.cta p {
+.cta__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.cta__text {
+  max-width: 34rem;
   margin: 0;
   color: var(--muted-foreground);
+}
+
+.cta .btn {
+  margin-top: 0.5rem;
 }
 
 .more {
